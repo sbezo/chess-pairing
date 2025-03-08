@@ -33,6 +33,7 @@
 
 	<script type="module" src="script.js"></script>
 	<script src="berger-fide.js"></script>
+
 	<script>
 	function _on_DOM_content_loaded(event) {
 		window.app = new Controller(new Tournament());
@@ -158,43 +159,20 @@
     <div id="tab5" class="tab-content">
         <section id="about">
             <h2>About</h2>
-            <p><strong>Chess-Pairing</strong> software for single round-robin chess tournaments.</p>
-            <p>Tournament pairings are based on the <strong>Berger tables</strong>, following the original construction method developed by <a href="https://en.wikipedia.org/wiki/Round-robin_tournament" target="_blank">Richard Schurig</a>.</p>
-            <p><em>Note:</em> Please test the software before use. The software is provided <strong>as-is</strong> and used at your own risk.</p>
-            <p><em>Note:</em> During tournament in progress, save your data periodicaly. After exiting browser, the data are lost. You can load them then from save file.</p>
-            <h2>Release Notes</h2>
-           
-            
-            <h3>Version 1.0</h3>
-            
-            <h3>Features:</h3>
-            <ul>
-                <li>Sort & randomize players</li>
-                <li>Save & load list of players</li>
-                <li>Load a demo player list with Elo ratings</li>
-                <li>Save & load result for given list of players</li>
-            </ul>
-
-            <h3>Version 2.0</h3>
-            
-            <h3>Features:</h3>
-            <ul>
-                <li>Full Demo</li>
-                <li>Save All & Load All</li>
-                <li>New Tournament</li>
-                <li>Settings - final criteria</li>
-                <li>refactoring to OOP</li>
-            </ul>
-            
-            
-            
-   
+            <p>Our goal is to provide <strong>the simplest and most user-friendly website</strong> for chess pairing.</p>  
+            <p>It should be no more complicated than a basic calculator;)</p>
+            <br>
+            <p>- No Registration</p>
+            <p>- No Pricing</p>
+            <p>- No Limits</p>
+            <br>
+            <h2>Leave Your Feedback</h2>
+            <textarea id="feedback" rows="4" cols="50"></textarea><br>
+            <button onclick="app.sendFeedback()">Submit</button>      
         </section>
         <footer>
-            <p><small>Designed & Developed by Stefan Bezo & Juraj Borik, 2025. Repository for this project you can find on <a href="https://github.com/sbezo/chess-pairing" target="_blank">GitHub</a>. Feel free to comment, report issues or ask new features, or give a star;)</small></p>    
+            <p><small>Designed & Developed by Stefan Bezo & Juraj Borik, 2025. Repository for this project you can find on <a href="https://github.com/sbezo/chess-pairing" target="_blank">GitHub</a>. Feel free to comment, report issues, ask new features, or just give a star;)</small></p>
         </footer>
     </div>
-
-
 </body>
 </html>
