@@ -29,7 +29,7 @@ jobs:
           sudo mkdir -p /dev-auto-folder
           sudo rsync -av /tmp/dev-auto-folder/ ./dev-auto-folder
           cd /dev-auto-folder
-          echo "This is a test file" > test.txt
+          sudo echo "This is a test file" > test.txt
           ls -la
 
 
