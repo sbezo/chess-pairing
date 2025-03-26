@@ -14,10 +14,10 @@ jobs:
         with:
           ref: dev
 
-      - name: Deploy to gh-pages /dev folder
+      - name: Copy dev branch to /dev-auto-folder
         run: |
           ls -la
-          mkdir /dev
-          rsync -av --exclude='.*' ./ /dev
-          cd /dev
+          mkdir /dev-auto-folder
+          rsync -av --exclude='.*' ./ /dev-auto-folder
+          cd /dev-auto-folder
           ls
