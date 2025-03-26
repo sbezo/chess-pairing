@@ -26,9 +26,9 @@ jobs:
 
       - name: Copy /tmp/dev-auto-folder to main branch
         run: |
-          sudo mkdir -p /dev-auto-folder
+          sudo mkdir -p ./dev-auto-folder
           sudo rsync -av /tmp/dev-auto-folder/ ./dev-auto-folder
-          cd /dev-auto-folder
+          cd ./dev-auto-folder
           echo "This is a test file"
           ls -la
 
