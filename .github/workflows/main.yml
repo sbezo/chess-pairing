@@ -18,8 +18,7 @@ jobs:
         run: |
           pwd
           ls -la
-          echo $GITHUB_WORKSPACE
-          mkdir /dev-auto-folder
+          sudo mkdir /dev-auto-folder
           rsync -av --exclude='.*' ./ /dev-auto-folder
           cd /dev-auto-folder
           ls
