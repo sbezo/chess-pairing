@@ -34,12 +34,11 @@ jobs:
           git config --global user.name "github.actions"
           git config --global user.email "github.actions@users.noreply.github.com"
 
-      - name: Commit changes
+      - name: Commit changes to main branch
         run: |
           git add .
           git commit -m "Auto deploy dev branch to main branch"
-          git fetch --all
-          git diff main origin/main
+          git push origin main
 
 
 
