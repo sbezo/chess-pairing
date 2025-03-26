@@ -18,5 +18,22 @@ jobs:
         run: |
           sudo mkdir /dev-auto-folder
           sudo rsync -av --exclude='.*' ./ /dev-auto-folder
-          cd /dev-auto-folder
+
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Copy /dev-auto-folder to main branch
+        run: |
           ls -la
+
+      - name: Setup Git
+        run: |
+          git config --global user.namer "github.actions"
+          git config --global user.emil "github.actions@users.noreply.github.com"
+
+
+
+          
+          
