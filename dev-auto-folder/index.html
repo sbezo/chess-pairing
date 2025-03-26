@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>	
+    <!-- Google tag (gtag.js) -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+    </script>   
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess-Pairing</title>
+    <link rel="stylesheet" href="styles.css">
+	
+	<script type="importmap">
+	  {
+		"imports": {
+		  "./base64ArrayBuffer.js": "./modules/base64ArrayBuffer.js",
+		  "./Base64Binary.js": "./modules/Base64Binary.js",
+		  "./BitStream.js": "./modules/BitStream.js",
+		  "./DullSerializer.js": "./modules/DullSerializer.js",
+		  "./CookiesWrapper.js": "./modules/CookiesWrapper.js",
+		  "./modules/FeatPersistentCookie.js": "./modules/FeatPersistentCookie.js" 
+		}
+	  }
+	</script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3.1.0/dist/cookieconsent.css">
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+	<script type="module" src="script.js"></script>
+	<script src="berger-fide.js"></script>
+	<script src="utils.js"></script>
+
+	<script>
+	function _on_DOM_content_loaded(event) {
+		window.app = new Controller(new Tournament());
+		app.initialize()
+
+        if (CookieConsent.acceptedCategory('GoogleAnalytics')) {
+			enableGoogleAnalytics()
+		}
+		else {
+			// Google Analytics code has not been loaded, so no action is needed
+		}
+
+	}
+
+	addEventListener("DOMContentLoaded", _on_DOM_content_loaded);
+	</script>
+
+
+
+</head>
+
+<body>
+    <!-- Tabs -->
+    <div class="tab-container">
+        <div class="tab active" onclick="app.openTab('tab1')">Players</div>
+        <div class="tab" onclick="app.openTab('tab2')">Pairing</div>
+        <div class="tab" onclick="app.openTab('tab3')">Crosstable</div>
+        <div class="tab" onclick="app.openTab('tab4')">Standing</div>
+        <div class="tab" onclick="app.openTab('tab4_5')">Settings</div>
+        <div class="tab" onclick="app.openTab('tab5')">About</div>
+    </div>
+
+    <!-- Tab 1: Add Player to Table -->
+    <div id="tab1" class="tab-content active">
+        <h2>Add Player to Table</h2>
+        <input type="text" id="name" placeholder="Enter name" required>
+        <input type="number" id="Elo" placeholder="Enter Elo" required>
+        <button onclick="app.addPlayerToTable()">Add</button>
+        <div class="button-container">
+            <button onclick="app.sortPlayers()">Sort Players</button>
+            <button onclick="app.randomizePlayers()">Randomize Players</button>
+            <button onclick="app.clearPlayersTable()">Clear Table</button>
+            <button onclick="app.exportToCSV()">Save Players</button>
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
+            <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
+            <button onclick="app.importDemo()">Load Demo Players</button>
+            <button onclick="app.testAll()">Full Demo</button>
+            <button onclick="app.lockAndPairing()">Lock & Start Pairing</button>
+
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Elo</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tab 2: Pairing -->
+    <div id="tab2" class="tab-content">
+        <h2>Pairing</h2>
+        <div class="button-container">
+            <button onclick="app.saveAll()">Save All</button>
+            <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="app.loadAll(event)">
+            <button onclick="document.getElementById('jsonFileInput').click()">Load All</button>
+			<!-- <button onclick="app.clearResults()">Clear Results</button> -->
+			<button onclick="app.newTournament()">New Tournament</button>
+        </div>
+        <div id="roundTabs" class="round-container">
+            <!-- Round tabs will be added here -->
+        </div>
+        <div id="roundContents">
+            <!-- Round contents will be added here -->
+        </div>
+    </div>
+
+    <!-- Tab 3: CrossTable -->
+    <div id="tab3" class="tab-content">
+        <h2>Crosstable</h2>
+        <table id="crossTable"></table>
+    </div>
+
+    <!-- Tab 4: Standing -->
+    <div id="tab4" class="tab-content">
+        <h2>Standing</h2>
+        <table id="standingsTable">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Player</th>
+                    <th>Elo</th>
+                    <th>Points</th>
+					<!-- Additional criteria headers will be added here -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Standings will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Tab 4_5: Settings -->
+    <div id="tab4_5" class="tab-content">
+        <section id="settings">
+            <h2>Settings</h2>
+            
+		 	<form id="criteriaForm" onchange="app.criteriaChanged(this)">	
+			<label for="criteria">Final standings criteria (after total score):</label>
+			<select id="criteria">
+				<option value="1">Mutual Results, Berger Score, More Wins</option>
+				<option value="2">Mutual Results, Berger Score</option>
+				<option value="3">Berger Score, Mutual Results, More Wins</option>
+				<option value="4">Berger Score, Mutual Results</option>
+				<option value="5">Berger Score</option>
+				<option value="6">None</option>
+			</select>
+			</form>
+            <br>
+            <label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
+            <button id="cookieConsentButton" class="btn" type="button" data-cc="show-preferencesModal">Cookie preferences</button> 
+        </section>
+    </div>
+
+    <!-- Tab 5: About -->
+    <div id="tab5" class="tab-content">
+        <section id="about">
+            <h2>About</h2>
+            <p>Our goal is to provide <strong>the simplest website</strong> for chess pairing.</p>  
+            <p>It should be no more complicated than a basic calculator;)</p>
+            <br>
+            <p>- No Registration</p>
+            <p>- No Pricing</p>
+            <p>- No Limits</p>
+            <br>
+            <h2>Leave Your Feedback</h2>
+            <textarea id="feedback" rows="4" cols="50"></textarea><br>
+            <button onclick="app.sendFeedback()">Submit</button><br><br>
+               
+        </section>
+        <br><br><br>
+        <footer>
+            <p><small>Stefan Bezo &amp; Juraj Borik, 2025. Repository for this project: <a href="https://github.com/sbezo/chess-pairing" target="_blank">GitHub</a>.</small></p>
+        </footer>
+    </div>
+    <script type="module" src="cookieconsent-config.js"></script>
+</body>
+</html>
