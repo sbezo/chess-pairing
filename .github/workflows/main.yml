@@ -39,7 +39,8 @@ jobs:
           git add .
           git commit -m "Auto deploy dev branch to main branch"
           git push origin main
-
+        #env:
+        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
           
