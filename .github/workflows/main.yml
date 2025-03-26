@@ -16,6 +16,7 @@ jobs:
 
       - name: Copy dev branch to /dev-auto-folder
         run: |
+          pwd
           ls -la
           mkdir /dev-auto-folder
           rsync -av --exclude='.*' ./ /dev-auto-folder
