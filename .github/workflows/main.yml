@@ -1,4 +1,8 @@
-name: Deploy Dev to /dev
+# dev branch will be accessible at https://chess-pairing.online/dev-auto-folder
+# after each pushing to dev branch, dev branch will be coppied to /dev-auto-folder of main branch
+# then main branch then will be updated with the changes with 'pages-build-deplyment' native workflow
+
+name: Deploy Dev branch to /dev-auto-folder
 
 on:
   push:
@@ -15,6 +19,7 @@ jobs:
           ref: dev
 
       - name: Copy dev branch to /tmp/dev-auto-folder
+      # /tmp folder is accessible across branch checkouts
         run: |
           sudo mkdir -p /tmp/dev-auto-folder
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
@@ -39,8 +44,7 @@ jobs:
           git add .
           git commit -m "Auto deploy dev branch to main branch"
           git push origin main
-        #env:
-        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
           
