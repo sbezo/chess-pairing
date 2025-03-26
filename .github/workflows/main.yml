@@ -19,6 +19,6 @@ jobs:
           pwd
           ls -la
           sudo mkdir /dev-auto-folder
-          rsync -av --exclude='.*' ./ /dev-auto-folder
+          sudo rsync -av --exclude='.*' ./ /dev-auto-folder
           cd /dev-auto-folder
           ls
