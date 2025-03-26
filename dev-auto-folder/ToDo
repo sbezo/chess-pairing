@@ -1,2 +1,3 @@
 - create github action do deploy dev branch to 'chess-pairing.online/dev-auto-folder'
+- fix merging dev to main
 - move all branches from dev repository?
