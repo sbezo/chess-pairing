@@ -1,0 +1,53 @@
+# dev branch will be accessible at https://chess-pairing.online/dev-auto-folder
+# after each pushing to dev branch, dev branch will be coppied to /dev-auto-folder of main branch
+# then main branch then will be updated with the changes with 'pages-build-deplyment' native workflow
+
+name: Deploy Dev branch to /dev-auto-folder
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev branch
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+
+      - name: Copy dev branch to /tmp/dev-auto-folder
+      # /tmp folder is accessible across branch checkouts
+        run: |
+          sudo mkdir -p /tmp/dev-auto-folder
+          sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
+
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Copy /tmp/dev-auto-folder to main branch
+        run: |
+          sudo mkdir -p ./dev-auto-folder
+          sudo rsync -av /tmp/dev-auto-folder/ ./dev-auto-folder
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github.actions"
+          git config --global user.email "github.actions@users.noreply.github.com"
+
+      - name: Commit changes to main branch
+        run: |
+          git add .
+          git commit -m "Auto deploy dev branch to main branch"
+          git push origin main
+          echo "Changes committed to main branch"
+          
+
+
+
+          
+          
