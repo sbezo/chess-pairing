@@ -56,3 +56,9 @@ function generateBergerPairings(players) {
 	return pairing
 
 }
+
+
+if (typeof exports !== 'undefined') {
+    exports.generateBergerPairingsIdx = generateBergerPairingsIdx
+    exports.generateBergerPairings = generateBergerPairings
+}

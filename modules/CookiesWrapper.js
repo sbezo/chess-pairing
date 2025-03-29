@@ -29,7 +29,6 @@ export class CookiesWrapper {
 		try {
 			if (document.constructor.name == 'NodeDocument484948494849') {
 				document.cookie[name] = value
-				console.log("in node workaround")
 				return
 			}
 		}			
