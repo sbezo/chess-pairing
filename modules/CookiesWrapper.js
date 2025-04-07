@@ -70,8 +70,10 @@ export class CookiesWrapper {
 	load_base64_from_cookie(name) {
 		let data = this.get_cookie_value(name)
 
-		data.replaceAll('|', '/')
-		data.replaceAll('@', '=') 
+		if ( data !== null) {
+			data.replaceAll('|', '/')
+			data.replaceAll('@', '=') 
+		}
 	
 		return data
 	}
