@@ -553,7 +553,6 @@ class Controller {
 		}
 
 		this.sendButtonFeedback();
-		console.log("sendButtonFeedback should be called");
 
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
@@ -1182,8 +1181,7 @@ class Controller {
 	}
 
 	sendButtonFeedback() {
-		console.log("sendButtonFeedback called");
-		const feedback_text = "Somebody pressed lockAndPairing Button";
+		const feedback_text = this.data.players[0].name + " pressed lockAndPairing Button";
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
