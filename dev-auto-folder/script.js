@@ -1181,7 +1181,7 @@ class Controller {
 	}
 
 	sendButtonFeedback() {
-		const feedback_text = this.data.players[0].name + " pressed lockAndPairing Button";
+		const feedback_text = "Somebody pressed lockAndPairing Button with " + this.data.players[0].name + " as first player.";
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
