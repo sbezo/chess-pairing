@@ -1179,7 +1179,8 @@ class Controller {
 	}
 
 	async sendButtonFeedback() {
-		const feedback_text = "Somebody pressed 'lockAndPairing' Button";
+		console.log("sendButtonFeedback called");
+		const feedback_text = "Somebody pressed lockAndPairing Button";
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
