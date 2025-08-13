@@ -587,7 +587,7 @@ class Controller {
 
 		this.saveToCookie()
 
-		sendButtonFeedback()
+		this.sendButtonFeedback()
 	}
 
 	openRound(roundNumber) {
