@@ -548,11 +548,12 @@ class Controller {
 
 	lockAndPairing() {
 		if (this.data.players.length < 2) {
-			alert("Not enought players")
+			alert("Not enough players")
 			return
 		}
 
 		this.sendButtonFeedback();
+		console.log("sendButtonFeedback should be called");
 
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
@@ -1180,7 +1181,7 @@ class Controller {
 		document.getElementById("feedback").value = "Thank You.";
 	}
 
-	async sendButtonFeedback() {
+	sendButtonFeedback() {
 		console.log("sendButtonFeedback called");
 		const feedback_text = "Somebody pressed lockAndPairing Button";
 		const myHeaders = new Headers();
