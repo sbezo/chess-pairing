@@ -552,6 +552,8 @@ class Controller {
 			return
 		}
 
+		this.sendButtonFeedback();
+
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
 				return
@@ -587,7 +589,7 @@ class Controller {
 
 		this.saveToCookie()
 
-		this.sendButtonFeedback()
+		
 	}
 
 	openRound(roundNumber) {
