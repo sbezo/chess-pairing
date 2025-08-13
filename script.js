@@ -586,6 +586,8 @@ class Controller {
 		this.openRound(1);
 
 		this.saveToCookie()
+
+		sendButtonFeedback()
 	}
 
 	openRound(roundNumber) {
@@ -1174,6 +1176,28 @@ class Controller {
     	  .catch((error) => console.error(error));
 		
 		document.getElementById("feedback").value = "Thank You.";
+	}
+
+	async sendButtonFeedback() {
+		const feedback_text = "Somebody pressed 'lockAndPairing' Button";
+		const myHeaders = new Headers();
+    	myHeaders.append("Content-Type", "application/json");		
+    	const raw = JSON.stringify({
+    	  "message": feedback_text
+    	});
+	
+    	const requestOptions = {
+    	  method: "POST",
+    	  headers: myHeaders,
+    	  body: raw,
+    	  redirect: "follow"
+    	};
+	
+    	fetch("https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback", requestOptions)
+    	  .then((response) => response.text())
+    	  .then((result) => console.log(result))
+    	  .catch((error) => console.error(error));
+
 	}
 }
 
