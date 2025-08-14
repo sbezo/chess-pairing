@@ -1,4 +1,4 @@
-### 1. Modify something in dev branch.  
+# 1. Modify something in dev branch.  
 > Never do directly in main branch.  
 
 ```
@@ -11,15 +11,16 @@ Now you can code something interesting.
 Commit + sync in VSCode. 
 Github actions deploy dev changes to subpage, there you can test it [here](https://chess-pairing.online/dev-auto-folder) 
 
-# After testing you can Merge dev to main from VSCode:
+## After testing you can Merge dev to main from VSCode:
 ```
 git checkout main
 git pull origin main
 git merge dev
 git push origin main
+git checkout dev
 ```
 
-### 2. Modify something in feature branch ###
+# 2. Modify something in feature branch ###
 > Again - Never do directly in main branch.   
 ```
 git checkout dev
@@ -47,4 +48,5 @@ git checkout main
 git pull origin main
 git merge dev
 git push origin main
+git checkout dev
 ```
