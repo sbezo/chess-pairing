@@ -1,10 +1,16 @@
-## 1. idem modifikovat nieco mensie priamo v dev branchi
+### 1. idem modifikovat nieco mensie priamo v dev branchi
 git checkout dev
 git pull origin dev    # make sure dev is up to date
 
-# code something
+# Code something interesting #
 
 Commit + sync
 
+# Test on https://chess-pairing.online/dev-auto-folder #
 
+# Merge dev to main
+git checkout main
+git pull origin main
+git merge dev
+git push origin main
 
