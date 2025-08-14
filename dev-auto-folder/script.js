@@ -12,7 +12,7 @@ class ResultRow {
 // model class - only data and operations on it, no DOM usage
 // all data is stored here
 // can be separate js module
-class Tournament {
+export class Tournament {
 	// need some strings for JSON
 	static MUTUAL_RESULTS_CRIT = "_Same_group";
 	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
@@ -411,7 +411,7 @@ function result_from_save_id(result) {
 // ************************************************************
 
 
-class Controller {
+export class Controller {
 	static COOKIE_ID = "tournament-id="
 
 	constructor(tournament_data) {
@@ -476,7 +476,7 @@ class Controller {
 			}
 		}
 		catch(e) {
-			console.log("This is catched exception. This is not error, if cookie for Tournament data was disabled.\n" + e)
+			console.log("This is catched exception. This is not error, if cookie for Tournament data was disabled.\n" + e.stack)
 		}
 	}
 
@@ -1207,7 +1207,9 @@ function sanitizeInput(input) {
     return input.replace(/[^a-zA-Z0-9À-ž .,:;!?'\n\r\[\](){}-]/g, '');
 }
 
-window.Controller = Controller
-window.Tournament = Tournament
+if (typeof window !== 'undefined') {
+	window.Controller = Controller
+	window.Tournament = Tournament
+}
 
 
