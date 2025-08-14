@@ -1,3 +1,10 @@
 ## 1. idem modifikovat nieco mensie priamo v dev branchi
 git checkout dev
 git pull origin dev    # make sure dev is up to date
+
+# code something
+
+Commit + sync
+
+
+

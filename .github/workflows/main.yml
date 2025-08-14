@@ -42,7 +42,7 @@ jobs:
       - name: Commit changes to main branch
         run: |
           git add .
-          git commit -m "Auto deploy dev branch to main branch"
+          git commit -m "Auto deploy dev branch to main branch" || echo "nothing to commit"
           git push origin main
           echo "Changes committed to main branch"
           
