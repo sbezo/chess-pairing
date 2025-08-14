@@ -134,14 +134,13 @@ export class FeatPersistentCookie {
 	saveAll(cookie_name, data_org) {
 		let data = this.serialize_tournament_data(data_org)
 
-	//	console.log("data.length: " + data.length)
 		new CookiesWrapper().save_base64_to_cookie(cookie_name, data)
 	}
 
 	loadAll(cookie_name) {
 		let data = new CookiesWrapper().load_base64_from_cookie(cookie_name)
 
-		// console.log("load all- data: " + data)
+		if (data === null) return null
 
 		let res = this.deserialize_tournament_data(data)
 
