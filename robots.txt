@@ -1,0 +1,7 @@
+User-agent: Googlebot
+Allow: /README.md
+Allow: /index.html
+Disallow: /
+
+User-agent: *
+Disallow: /
