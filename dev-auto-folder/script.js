@@ -33,7 +33,7 @@ export class Tournament {
 		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
 		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
 
-		this.cookieStorage = new FeatPersistentCookie() 
+		this.cookieStorage = new FeatPersistentCookie()
 	}
 
 	createTournamentInfo() {
@@ -52,7 +52,7 @@ export class Tournament {
 			location_ : "", // opt
 
 			werePlayersRandomized : false,
-			double_rounded : false,
+			numRounds : 1,
 			pairing_version : 1,
 
 			// the order is priority
@@ -115,9 +115,9 @@ export class Tournament {
 	}
 
 	setResult(roundIndex, resultRow, result) {
-		if (roundIndex > this.rounds.length || resultRow > this.rounds[roundIndex].length) {
-			throw new Error("round or row index out of range");
-		}
+		//if (roundIndex > this.rounds.length || resultRow > this.rounds[roundIndex].length) {
+		//	throw new Error("round or row index out of range");
+		//}
     	this.rounds[roundIndex][resultRow].result = result;
 		this.saveToCookie()
 	}
@@ -177,6 +177,34 @@ export class Tournament {
 		// now only Berger method is supported
 	    this.rounds = generateBergerPairingsIdx(this.players.length);
 
+		// create regular and reversed rounds as base for numRounds > 1
+		let round2 = this.rounds.map(round =>
+		  round.map(pair => {
+			return [ pair[1], pair[0] ];  // swap players
+		  })
+		);
+		let round3 = this.rounds.map(round =>
+		  round.map(pair => {
+			return [ pair[0], pair[1] ];
+		  })
+		);
+		let round4 = this.rounds.map(round =>
+		  round.map(pair => {
+			return [ pair[1], pair[0] ];
+		  })
+		);
+
+		// generate rounds according to numRounds
+		if (this.tournamentInfo.numRounds == 2) {
+			this.rounds = this.rounds.concat(round2);
+		}
+		else if (this.tournamentInfo.numRounds == 3) {
+			this.rounds = this.rounds.concat(round2).concat(round3);
+		}
+		else if (this.tournamentInfo.numRounds == 4) {
+			this.rounds = this.rounds.concat(round2).concat(round3).concat(round4);
+		}
+		console.log("generatePairings: numRounds = " + this.tournamentInfo.numRounds + ", rounds generated = " + this.rounds.length)
     	// Add result to the pairings - "1" or "0" or "0.5" or ""
 		// brx: changing pair[3] to ResultRow hard way
 		for (let i=0; i<this.rounds.length; i++) {
@@ -529,6 +557,7 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
 		document.getElementById("criteria").disabled = false;
+		document.getElementById("numRounds").disabled = false;
 	}
 
 	lockWidgets() {
@@ -544,6 +573,7 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
 		document.getElementById("criteria").disabled = true;
+		document.getElementById("numRounds").disabled = true;
 	}
 
 	lockAndPairing() {
@@ -917,7 +947,7 @@ export class Controller {
 
 	updateResult(roundIndex, pairIndex, result) {
 		this.data.setResult(roundIndex, pairIndex, result);
-		this.updateCrosstable(this.data.rounds[roundIndex][pairIndex]);
+		this.updateCrosstable();
 	}
 
 
@@ -960,37 +990,53 @@ export class Controller {
 		});
 	}
 
-	updateCrosstable(resultRow) {
-		let result = resultRow.result
 
-		// two coresponding fields in the table are updated
-		let ind1 = resultRow.player1Idx
-		let ind2 = resultRow.player2Idx
-		let table = document.getElementById("crossTable");
-		let cell = table.rows[ind1 + 1].cells[ind2 + 1];
-		let reverseCell = table.rows[ind2 + 1].cells[ind1 + 1];
-
-		switch(result) {
-			case"-": 
-				cell.innerText = "";
-				reverseCell.innerText = "";
-				break;
-			case "1":
-			case "0":
-			case "0.5":
-				cell.innerText = result;
-				reverseCell.innerText = invertedResult(result)
-				break
-			case "0-0":
-				cell.innerText = "0";
-				reverseCell.innerText = "0";
-				break
-			default: 
-				console.warn("unknown result: '" + result + "'");
+	// need to rewrite to use data not just current result
+	updateCrosstable() {
+	    let table = document.getElementById("crossTable");
+	    // Clear all cells except headers and player names
+	    for (let i = 1; i < table.rows.length; i++) {
+	        for (let j = 1; j < table.rows[i].cells.length; j++) {
+	            table.rows[i].cells[j].innerText = "";
+	        }
+	    }
+		// Make "X" in diagonal again (in case of clear)
+		for (let i = 1; i < table.rows.length; i++) {
+			table.rows[i].cells[i].innerText = "X";
 		}
+	
+	    // Aggregate results for each player pair
+	    for (let round of this.data.rounds) {
+	        for (let resultRow of round) {
+	            let ind1 = resultRow.player1Idx;
+	            let ind2 = resultRow.player2Idx;
+	            let result = resultRow.result;
+			
+	            // Skip empty or placeholder results
+	            if (result === "-" || result === "") continue;
+			
+	            let cell = table.rows[ind1 + 1].cells[ind2 + 1];
+	            let reverseCell = table.rows[ind2 + 1].cells[ind1 + 1];
+			
+	            // If there are multiple rounds, concatenate results (or you can sum points, etc.)
+	            if (cell.innerText) {
+	                cell.innerText += " / " + result;
+	                reverseCell.innerText += " / " + invertedResult(result);
+	            } else {
+	                if (result === "0-0") {
+	                    cell.innerText = "0";
+	                    reverseCell.innerText = "0";
+	                } else {
+	                    cell.innerText = result;
+	                    reverseCell.innerText = invertedResult(result);
+	                }
+	            }
+	        }
+	    }
 	}
-	// ************************************************************
-	// results
+
+
+
 	
 	clearResultsTab() {
 		const roundTabs = document.getElementById("roundTabs");
@@ -1010,7 +1056,7 @@ export class Controller {
 				if (selectElement) {
 					selectElement.value = result;
 				}
-				this.updateCrosstable(this.data.rounds[roundIndex][pairIndex])
+				this.updateCrosstable()
 			});
 		});
 	}
@@ -1109,6 +1155,13 @@ export class Controller {
 		};
 		reader.readAsText(file);
 	}
+	// ************************************************************
+	// multiRound
+	multiRoundChanged(target) {
+		let opt = target.numRounds.selectedIndex
+		this.data.tournamentInfo.numRounds = opt + 1
+	}
+
 
 	// ************************************************************
 	// criteria

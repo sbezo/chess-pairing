@@ -42,6 +42,7 @@ th {
 }
 .button-container {
     float: right;
+    margin-top: -50px;
 }
 .button-container button {
     margin-left: 10px;
