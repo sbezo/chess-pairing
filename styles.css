@@ -121,3 +121,13 @@ footer {
     background-color: white;
     border-top: 2px solid black;
 }
+
+.fb-button {
+    display: inline-block;
+    background-color: #1877F2; /* Facebook blue */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
