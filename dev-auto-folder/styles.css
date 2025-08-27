@@ -138,7 +138,7 @@ footer {
 
 
 /* Mobile optimization */
-@media (max-width: 780px) {
+@media (max-width: 1300px) {
     .button-container {
         text-align: right;
         margin-top: 10px;
