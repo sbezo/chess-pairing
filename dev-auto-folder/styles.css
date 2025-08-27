@@ -47,6 +47,9 @@ th {
 .button-container button {
     margin-left: 10px;
 }
+#lockAndPairButton {
+    background-color: #d76f6f;
+}
 .locked {
 opacity: 0.5;
 pointer-events: none;
