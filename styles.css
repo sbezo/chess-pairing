@@ -74,7 +74,6 @@ pointer-events: none;
     display: none;
     padding: 20px;
     border: 1px solid white
-    margin-top: -1px;
 }
 .round-content.active {
     display: block;

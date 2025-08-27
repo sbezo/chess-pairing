@@ -31,6 +31,7 @@ git checkout -b new-feature
 Now you can code some nice new feature
 
 Commit and test locally on your localhost.. 
+python3 -m http.server 8000  
 
 # Now Merge to dev:
 ```
