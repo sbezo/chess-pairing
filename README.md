@@ -1,7 +1,7 @@
 
 About
 
-Chess-Pairing software for single round-robin chess tournaments.
+Chess-Pairing software for round-robin chess tournaments.
 
 Tournament pairings are based on the Berger tables, following the original construction method developed by Richard Schurig.
 
@@ -23,3 +23,9 @@ Features:
     New Tournament
     Settings - final criteria
     refactoring to OOP
+
+Version 3.0
+Features:
+
+    Multi-round support
+    Facebook feedback
