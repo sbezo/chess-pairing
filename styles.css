@@ -141,26 +141,41 @@ footer {
 @media only screen and (max-width: 500px) {
     .button-container {
         text-align: right;
-        margin-top: 10px;
+        margin-top: 0px;
+        margin-bottom: 4px;
     }
     .button-container button {
         width: 50%;
-        margin-bottom: 10px;
-        margin-top: 10px;
-        padding: 6px 24px;
+        margin-bottom: 4px;
+        margin-top: 4px;
+        padding: 8px 24px;
     }
     #AddPlayer {
         width: 100%;
         margin-bottom: 10px;
-        margin-top: 10px;
-        padding: 4px 24px;
+        margin-top: 4px;
+        padding: 8px 24px;
     }
     .tab {
-        font-size: 14px;
-        padding: 10px 2px;
+        font-size: 13px;
+        width: 20%;
+        border-radius: 5px;
+        padding: 10px 5px;
         cursor: pointer;
         border: 1px solid white;
         border-bottom: none;
         background-color: rgb(210, 210, 210);
+    }
+    #name {
+        width: 96%;
+        margin-bottom: 4px;
+        border-radius: 5px;
+        padding: 6px 6px;
+    }
+    #Elo {
+        width: 96%;
+        margin-bottom: 0px;
+        border-radius: 4px;
+        padding: 6px 6px;
     }
 }
