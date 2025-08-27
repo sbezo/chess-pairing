@@ -156,6 +156,7 @@ footer {
         padding: 4px 24px;
     }
     .tab {
+        font-size: 14px;
         padding: 10px 2px;
         cursor: pointer;
         border: 1px solid white;
