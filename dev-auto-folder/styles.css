@@ -40,17 +40,18 @@ th, td {
 th {
     background-color: white;
 }
+#lockAndPairButton {
+    background-color: #f0a7a7;
+    border-radius: 5px;
+}
 .button-container {
     float: right;
 }
 .button-container button {
     margin-left: 10px;
 }
-/*
-#lockAndPairButton {
-    background-color: #f0a7a7;
-}
-*/
+
+
 .locked {
 opacity: 0.5;
 pointer-events: none;
