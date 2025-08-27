@@ -78,7 +78,8 @@
             <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
             <button onclick="app.importDemo()">Load Demo Players</button>
             <button onclick="app.testAll()">Full Demo</button>
-            <button onclick="app.lockAndPairing()">Lock & Start Pairing</button>
+            <button id="lockAndPairButton" onclick="app.lockAndPairing()">Lock & Start Pairing</button>
+            
 
         </div>
 
@@ -156,6 +157,16 @@
 			</select>
 			</form>
             <br>
+            <form id="multiRound" onchange="app.multiRoundChanged(this)">	
+            <label for="numRounds">Number of rounds:</label>
+			<select id="numRounds">
+				<option value="1">1 round</option>
+				<option value="2">2 rounds</option>
+				<option value="3">3 rounds</option>
+				<option value="4">4 rounds</option>
+            </select>
+			</form>
+            <br>
             <label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
             <button id="cookieConsentButton" class="btn" type="button" data-cc="show-preferencesModal">Cookie preferences</button> 
         </section>
@@ -175,6 +186,9 @@
             <h2>Leave Your Feedback</h2>
             <textarea id="feedback" rows="4" cols="50"></textarea><br>
             <button onclick="app.sendFeedback()">Submit</button><br><br>
+            <br>
+            <h2>Or contact us on Facebook</h2>
+            <a href="https://www.facebook.com/profile.php?id=61574243093273" target="_blank" rel="noopener noreferrer" class="fb-button"> Facebook </a>
                
         </section>
         <br><br><br>

@@ -42,9 +42,13 @@ th {
 }
 .button-container {
     float: right;
+    margin-top: -50px;
 }
 .button-container button {
     margin-left: 10px;
+}
+#lockAndPairButton {
+    background-color: #f0a7a7;
 }
 .locked {
 opacity: 0.5;
@@ -116,4 +120,14 @@ footer {
     width: 90%;
     background-color: white;
     border-top: 2px solid black;
+}
+
+.fb-button {
+    display: inline-block;
+    background-color: #1877F2; /* Facebook blue */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
 }

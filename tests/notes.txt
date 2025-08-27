@@ -1,0 +1,5 @@
+# building docker with Selenium from root of repo - just once
+docker build -t chess-pairing-tests ./tests
+
+# running tests from root of repo
+docker run --rm -v $(pwd):/tests chess-pairing-tests pytest -v
