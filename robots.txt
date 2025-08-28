@@ -1,7 +1,5 @@
-User-agent: Googlebot
+User-agent: *
 Allow: /README.md
 Allow: /index.html
-Disallow: /
-
-User-agent: *
+Allow: /sitemap.xml
 Disallow: /
