@@ -4,7 +4,6 @@ body {
 }
 .tab-container {
     display: flex;
-    
     border-bottom: 2px solid white;
 }
 .tab {
@@ -51,10 +50,6 @@ th {
 .button-container button {
     margin-left: 10px;
 }
-
-
-
-
 .locked {
 opacity: 0.5;
 pointer-events: none;
@@ -140,42 +135,84 @@ footer {
 /* Mobile optimization */
 @media only screen and (max-width: 500px) {
     .button-container {
-        text-align: right;
-        margin-top: 0px;
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* two equal columns */
+        gap: 6px;                       /* space between buttons */
+        margin-top: 0;
         margin-bottom: 4px;
+        text-align: center;             /* optional */
     }
+
     .button-container button {
-        width: 50%;
-        margin-bottom: 2px;
-        margin-top: 2px;
-        padding: 10px;
+        width: 100%;        /* take full column width */
+        margin: 0;          /* grid already handles spacing */
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 16px;    /* keep iOS from zooming */
+        box-sizing: border-box;
     }
+
     #AddPlayer {
         width: 100%;
-        margin-bottom: 10px;
-        margin-top: 2px;
-        padding: 10px;
-    }
-    .tab {
-        font-size: 13px;
-        width: 20%;
+        margin: 2px 0;
+        padding: 8px;
         border-radius: 5px;
-        padding: 10px 5px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #bcf0a7;
+    }
+
+    .tab-container {
+        display: flex;
+        flex-wrap: wrap;
+        border-bottom: 2px solid white;
+        overflow-x: hidden;
+    }
+
+    .tab {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: center;
+        font-size: clamp(8px, 2vw, 12px);
+        border-radius: 5px;
+        padding: 8px 4px;
         cursor: pointer;
         border: 1px solid white;
         border-bottom: none;
         background-color: rgb(210, 210, 210);
+        box-sizing: border-box;
     }
-    #name {
+
+    #name, #Elo {
         width: 96%;
         margin-bottom: 4px;
         border-radius: 5px;
-        padding: 6px 6px;
+        padding: 6px;
+        box-sizing: border-box;
     }
-    #Elo {
-        width: 96%;
-        margin-bottom: 0px;
-        border-radius: 4px;
-        padding: 6px 6px;
+    #tab1 #dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
     }
+
+    #tab1 #dataTable th,
+    #tab1 #dataTable td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        text-align: center;
+        padding: 6px 4px;
+    }
+
+    #tab1 {
+        overflow-x: hidden;
+    }
+    #name,
+    #Elo,
+    #AddPlayer,
+    .button-container button {
+        font-size: 16px;
+    }
+
 }
