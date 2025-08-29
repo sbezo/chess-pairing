@@ -1,5 +1,2 @@
 User-agent: *
-Allow: /README.md
-Allow: /index.html
-Allow: /sitemap.xml
-Disallow: /
+Allow: /
