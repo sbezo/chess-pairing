@@ -142,6 +142,21 @@ footer {
         margin-bottom: 4px;
         text-align: center;             /* optional */
     }
+    .round-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* two equal columns */
+        gap: 6px;                       /* space between buttons */
+        margin-top: 120px;
+        text-align: center;
+    }
+    .round-container .round-tab {
+        width: 100%;        /* take full column width */
+        margin: 0;          /* grid already handles spacing */
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 16px;    /* keep iOS from zooming */
+        box-sizing: border-box;
+    }
 
     .button-container button {
         width: 100%;        /* take full column width */
@@ -161,6 +176,16 @@ footer {
         -webkit-appearance: none;
         appearance: none;
         background-color: #bcf0a7;
+    }
+    #newTournament {
+        width: 205%;
+        margin: 2px 0;
+        padding: 8px;
+        border-radius: 5px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #f0a7a7;
     }
 
     .tab-container {
@@ -214,5 +239,6 @@ footer {
     .button-container button {
         font-size: 16px;
     }
+
 
 }
