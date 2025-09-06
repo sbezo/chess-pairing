@@ -1,6 +1,4 @@
 
-import { FeatPersistentCookie } from './modules/FeatPersistentCookie.js'
-
 class ResultRow {
 	constructor(player1Idx, player2Idx, result="-") {
 		this.player1Idx = player1Idx
@@ -11,7 +9,6 @@ class ResultRow {
 
 // model class - only data and operations on it, no DOM usage
 // all data is stored here
-// can be separate js module
 export class Tournament {
 	// need some strings for JSON
 	static MUTUAL_RESULTS_CRIT = "_Same_group";
@@ -29,32 +26,18 @@ export class Tournament {
 
 	constructor() {
 		this.tournamentInfo = this.createTournamentInfo() 
-
 		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
 		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
-
-		this.cookieStorage = new FeatPersistentCookie()
 	}
 
 	createTournamentInfo() {
 		return { 
-
 			// generate random hex string (used for save to distinguish files)
 			// stays same for one tournament
 			// will be generated, when pairing is done or on first save action
-			// after browser refresh, it will be loaded from cookies (if allowed)
 			id : null,
-
-			// next are not implemented yet
-			seed : "", // TODO: generated (to check correctness of pairings for purists)
-			title : "", // opt
-			date : "", // opt
-			location_ : "", // opt
-
 			werePlayersRandomized : false,
 			numRounds : 1,
-			pairing_version : 1,
-
 			// the order is priority
 			finalStandingsResolvers : [
 				Tournament.MUTUAL_RESULTS_CRIT,
@@ -64,28 +47,18 @@ export class Tournament {
 		}
 	}
 
-	saveToCookie() {
-		try {
-			if(! CookieConsent.acceptedCategory('Tournament')){
-				return
-			}
-			let data = {}
-			let players_copy = this.players.slice()
-			data.players = players_copy.map(p => { 
-				return {'name' : p.name, 'rating' : p.Elo} })
-			data.results = []
+	saveData(){
+        localStorage.setItem('tournamentData', JSON.stringify(this));
+		console.log("Data saved to localStorage", this);
+    }
 
-			this.rounds.forEach((round, round_i) => {
-				round.forEach((resultRecord, rec_i) => {
-					data.results.push(result_to_save_id(this.rounds[round_i][rec_i].result))
-				})
-			})
-			data.tournamentInfo = this.tournamentInfo
-			this.cookieStorage.saveAll('trndata', data)
-		}
-		catch(e) {
-			console.log(e)
-		}
+	loadData(){
+		let tournamentData = JSON.parse(localStorage.getItem('tournamentData'));
+		if (tournamentData) {
+        	this.players = tournamentData.players || [];
+        	this.rounds = tournamentData.rounds || [];
+        	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
+    	}
 	}
 		
 	generateRandomId() {
@@ -101,12 +74,12 @@ export class Tournament {
 		// if 'bye' set to something other then null, it is bye 
 		// 'bye' variable not used anywhere now
 		this.players.push({ name: name, Elo: Number(Elo), bye: bye });
-		this.saveToCookie()
+		this.saveData()
 	}
 	
 	removePlayer(idx) {
 		this.players.splice(idx, 1); // Remove from players array
-		this.saveToCookie()
+		this.saveData()
 	}
 	
 	lookupPlayerIndex(name) {
@@ -119,7 +92,7 @@ export class Tournament {
 		//	throw new Error("round or row index out of range");
 		//}
     	this.rounds[roundIndex][resultRow].result = result;
-		this.saveToCookie()
+		this.saveData()
 	}
 
 	getPlayer(idx) {
@@ -132,7 +105,7 @@ export class Tournament {
 
 	sortPlayers() {
 		this.players.sort((a, b) => b.Elo - a.Elo); // Sort players by Elo in descending order
-		this.saveToCookie()
+		this.saveData()
 	}
 
 	randomizePlayers() {
@@ -141,7 +114,7 @@ export class Tournament {
 			[this.players[i], this.players[j]] = [this.players[j], this.players[i]];
 		}
 		this.tournamentInfo.werePlayersRandomized = true
-		this.saveToCookie()
+		this.saveData()
 	}
 
 	addByeIfNeeded() {
@@ -153,24 +126,7 @@ export class Tournament {
 
 	clearResults() {
 		this.rounds = [];
-		this.saveToCookie()
-	}
-
-	generatePairingsForCookieLoad(number_of_players, method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(number_of_players);
-
-    	// Add result to the pairings - "1" or "0" or "0.5" or ""
-		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
-			}
-		}
-
-//		console.assert(!this.hasTornamentId())
-//		this.tournamentInfo.id = this.generateRandomId()
-//		this.saveToCookie()
+		this.saveData()
 	}
 
 	generatePairings(method) {
@@ -215,7 +171,7 @@ export class Tournament {
 
 		console.assert(!this.hasTornamentId())
 		this.tournamentInfo.id = this.generateRandomId()
-		this.saveToCookie()
+		this.saveData()
 	}
 
 	calculateStandings() {
@@ -440,83 +396,17 @@ function result_from_save_id(result) {
 
 
 export class Controller {
-	static COOKIE_ID = "tournament-id="
-
 	constructor(tournament_data) {
 		this.data = tournament_data
 	}
 
 	initialize() {
-		// https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie
-		
-		try {
-			let cookies = document.cookie.split(";").map((x) => x.trim())
-
-			cookies.forEach(cookie => {
-				if (cookie.startsWith(Controller.COOKIE_ID)) {
-					let data = cookie.split('=')
-					if (data[1] !== "") {
-						this.data.tournamentInfo.id = data[1]
-					}
-				}
-			});	
-		}
-		catch(error) {
-			;
-		}
-		this.loadFromCookie()
+		// load data from localStorage
+		this.data.loadData()
+		console.log("Data loaded from localStorage before calling _loadAllPart2", this.data)
+		this._loadAllPart2(this.data)
 	}
 
-	loadFromCookie() {
-		try {
-			if(! CookieConsent.acceptedCategory('Tournament')){
-				return
-			}
-			let cookie_data = this.data.cookieStorage.loadAll('trndata')
-			if (cookie_data !== null) {
-				let data = {}
-				// remap 'ratings' to 'Elo'
-				data.players = cookie_data.players.map(p => { 
-					return {'name' : p.name, 'Elo' : p.rating} })
-
-				if (cookie_data.results.length) {
-					this.data.generatePairingsForCookieLoad(data.players.length)
-				}
-
-				// recreate results
-				data.rounds = this.data.rounds
-
-				let idx = 0
-				data.rounds.forEach((round, round_i) => {
-					round.forEach((resultRecord, rec_i) => {
-						data.rounds[round_i][rec_i].result =
-							result_from_save_id(cookie_data.results[idx])
-						idx++
-					})
-				})
-
-				// recreate tournament inf
-				data.tournamentInfo = this.data.createTournamentInfo()
-
-				data.tournamentInfo = cookie_data.tournamentInfo
-
-				this._loadAllPart2(data)
-			}
-		}
-		catch(e) {
-			console.log("This is catched exception. This is not error, if cookie for Tournament data was disabled.\n" + e.stack)
-		}
-	}
-
-	saveToCookie() {
-		this.data.saveToCookie()
-	}
-
-	setCookie(tournament_id) {
-		if(CookieConsent.acceptedCategory('Tournament')){
-			document.cookie= `${Controller.COOKIE_ID}${tournament_id}; max-age=999999;`
-		}
-	}
 
 	newTournament(confirmed = false) {
 		if (!confirmed) {
@@ -524,25 +414,20 @@ export class Controller {
 				return
 			}
 		}
-
 		this.clearAll()
 	}
 
 	clearAll() {
 		// clear all Tournament data
 		this.data = new Tournament()
-
 		this.clearPlayersTable()
 		this.clearResultsTab()
 		this.clearCrosstableTab()
 		this.clearStandingsTab()
-
-		// set no criteria names in standing table
 		this.updateStandingTableNames([])
-
-		this.setCookie("")
 		this.unlockWidgets()
-		this.saveToCookie()
+		this.data.saveData()
+		this.openTab('tab1')
 	}
 
 	unlockWidgets() {
@@ -589,37 +474,25 @@ export class Controller {
 				return
 			}
 		}
-		// TODO: confirm final standing criteria before lock
-
 		// Update the standings table names (dynamic criteria)
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
-
 		// Add a "Bye" player if the number of players is odd
 		this.data.addByeIfNeeded();
-
 		this.updatePlayersTable();
-
 		// Generate pairings
 		this.generatePairings("Berger")
-
 		// Create tabs for all rounds
 		for (let i = 1; i <= (this.data.rounds.length); i++) {
 			this.createRoundTab(i);
 		}
-
 		// Generate empty cross table
 		this.generateCrossTable();
-
 		this.lockWidgets()
-
+		this.openTab('tab3')
 		this.openTab('tab2')
-
 		// Make round 1 active tab
 		this.openRound(1);
-
-		this.saveToCookie()
-
-		
+		this.data.saveData()
 	}
 
 	openRound(roundNumber) {
@@ -663,7 +536,7 @@ export class Controller {
 
 		players.forEach(player => {
 			// batch mode
-			this.addPlayerToTable_2(player.name, player.Elo, true);
+			this.addPlayerToTableExecute(player.name, player.Elo, true);
 		})
 		
 		this.updatePlayersTable();
@@ -671,18 +544,12 @@ export class Controller {
 
 	generatePairings(method) {
 		this.data.generatePairings(method)
-
-		this.setCookie(this.data.tournamentInfo.id)
 	}
-
-	// ************************************************************
-	// save & load
 
 	saveAll() {
 		if (!this.data.hasTornamentId()) {
 			// create cookie if there is none (case: pairing was not generated yet)
 			this.data.tournamentInfo.id = this.data.generateRandomId()
-			this.setCookie(this.data.tournamentInfo.id)
 		}
 
 		// brx: changed to save all data
@@ -739,7 +606,7 @@ export class Controller {
 
 	_loadAllPart2(data_loaded) {
 		// Apply all data to DOM	
-
+		console.log("Data loaded before refresh", data_loaded)
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
 
@@ -797,7 +664,7 @@ export class Controller {
 				this.openTab("tab1")
 			}
 		}
-		this.saveToCookie()
+
 	}
 
 	// ************************************************************
@@ -805,20 +672,20 @@ export class Controller {
 
 	// HTML API
 	addPlayerToTable() {
-		// Add player & ELO to the table
+		// Add player & ELO to the table controller
 		let name = document.getElementById("name").value;
 		let Elo = document.getElementById("Elo").value;
 		if (!Elo) {
 			Elo = 1400; // Default Elo value
 		}
 		if (name && Elo) {
-			this.addPlayerToTable_2(name, Elo)
+			this.addPlayerToTableExecute(name, Elo)
 		} else {
 			alert("Please enter name.");
 		}
 	}
 
-	addPlayerToTable_2(name, Elo, batch=false) {
+	addPlayerToTableExecute(name, Elo, batch=false) {
 		// check same player name
 		if (this.data.players.some((player) => player.name === name)) {
 			// skip alert silently if in batch mode
@@ -867,6 +734,7 @@ export class Controller {
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
 		table.innerHTML = ""; // Clear all rows
 		this.data.players = []; // Clear players array
+		this.data.saveData()
 	}
 	
 	updatePlayersTable() {
@@ -1128,12 +996,6 @@ export class Controller {
 		document.body.removeChild(link); // Clean up
 	}
 
-	
-	// brx: not very useful now, but it should contain all players (even removed)
-	// simple case: load all and just remove ones who is not presented
-	// after few local tournaments you will have prepared list of local players for quick
-	// and simple player list creation
-	// TODO: all players list
 	importFromCSV(event) {
 		const file = event.target.files[0];
 		const reader = new FileReader();
@@ -1147,8 +1009,9 @@ export class Controller {
 			rows.forEach(row => {
 				const [name, Elo] = row.split(',');
 				if (name && Elo) {
-
-					app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
+					console.log(`Importing player: ${name.trim()} with Elo: ${Elo.trim()}`);
+					if (!app_inst.data.players.some((player) => player.name === name))
+						app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
 				}
 			});
 			app_inst.updatePlayersTable();
@@ -1205,7 +1068,7 @@ export class Controller {
 		this.lockAndPairing();
 
 		this.generateTestResults();
-		this.saveToCookie()
+		this.data.saveData()
 
 		this.openTab('tab3');
 	}
@@ -1265,4 +1128,20 @@ if (typeof window !== 'undefined') {
 	window.Tournament = Tournament
 }
 
-
+// Event listeners:
+// Add player
+document.addEventListener("DOMContentLoaded", () => {
+    const addBtn = document.getElementById('AddPlayer');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            app.addPlayerToTable();
+        });
+    }
+	const numRoundsSelect = document.getElementById('numRounds');
+    if (numRoundsSelect) {
+        numRoundsSelect.addEventListener('change', function() {
+        app.data.tournamentInfo.numRounds = this.selectedIndex + 1;
+		app.data.saveData();
+        });
+	}
+});

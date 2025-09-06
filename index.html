@@ -6,50 +6,25 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-    </script>   
+    </script>
+
     <meta name="description" content="Free online round-robin chess pairing software. No registration, no pricing, no limits.">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess-Pairing</title>
     <link rel="stylesheet" href="styles.css">
-	
-	<script type="importmap">
-	  {
-		"imports": {
-		  "./base64ArrayBuffer.js": "./modules/base64ArrayBuffer.js",
-		  "./Base64Binary.js": "./modules/Base64Binary.js",
-		  "./BitStream.js": "./modules/BitStream.js",
-		  "./DullSerializer.js": "./modules/DullSerializer.js",
-		  "./CookiesWrapper.js": "./modules/CookiesWrapper.js",
-		  "./modules/FeatPersistentCookie.js": "./modules/FeatPersistentCookie.js" 
-		}
-	  }
-	</script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3.1.0/dist/cookieconsent.css">
     <link rel="icon" href="favicon.png" type="image/x-icon">
 	<script type="module" src="script.js"></script>
 	<script src="berger-fide.js"></script>
-	<script src="utils.js"></script>
 
+    <!-- Initialize Controller and Tournament after page loaded-->
 	<script>
 	function _on_DOM_content_loaded(event) {
 		window.app = new Controller(new Tournament());
 		app.initialize()
-
-        if (CookieConsent.acceptedCategory('GoogleAnalytics')) {
-			enableGoogleAnalytics()
-		}
-		else {
-			// Google Analytics code has not been loaded, so no action is needed
-		}
-
 	}
-
 	addEventListener("DOMContentLoaded", _on_DOM_content_loaded);
 	</script>
-
-
-
 </head>
 
 <body>
@@ -68,7 +43,7 @@
         <h2>Add Player to Table</h2>
         <input type="text" id="name" placeholder="Enter name" required>
         <input type="number" id="Elo" placeholder="Enter Elo" required>
-        <button id="AddPlayer" onclick="app.addPlayerToTable()">Add</button>
+        <button id="AddPlayer">Add</button>
         <div class="button-container">
             <button onclick="app.sortPlayers()">Sort Players</button>
             <button onclick="app.randomizePlayers()">Randomize Players</button>
@@ -79,8 +54,6 @@
             <button onclick="app.importDemo()">Load Demo Players</button>
             <button onclick="app.testAll()">Full Demo</button>
             <button id="lockAndPairButton" onclick="app.lockAndPairing()">Lock & Start Pairing</button>
-            
-
         </div>
 
         <table id="dataTable">
@@ -167,8 +140,7 @@
             </select>
 			</form>
             <br>
-            <label for="cookieConsentButton">Manage your Cookie Preferencies:</label>
-            <button id="cookieConsentButton" class="btn" type="button" data-cc="show-preferencesModal">Cookie preferences</button> 
+
         </section>
     </div>
 
@@ -176,7 +148,7 @@
     <div id="tab5" class="tab-content">
         <section id="about">
             <h2>About</h2>
-            <p>Our goal is to provide <strong>the simplest website</strong> for chess pairing.</p>  
+            <p>Our goal is to provide <strong>the simplest website</strong> for chess round-robin pairing.</p>  
             <p>It should be no more complicated than a basic calculator;)</p>
             <br>
             <p>- No Registration</p>
