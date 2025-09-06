@@ -1,12 +1,19 @@
 ✅ create github action do deploy dev branch to 'chess-pairing.online/dev-auto-folder'
 ✅ fix merging dev to main
 ✅ multiround
-
-- ID tlacitiek
 ✅ "Lock&Start pairing" should be red colour
 ✅ dorobit link na Facebook page
+✅ duplicate name check from "Load Players"
 
 
-- duplicate name check from "Load Players"
+
+
+- prerobit 'on-click' na event listener
+- rovnaka velkost tabov jednotlivych kol na velkom screene
+- obcas zle prekresli crosstable, preco? po refreshi je to ok
+- zasuvanie crostable a standing na telefone
+- posuvanie about na telefone, optimalizacia
+- nova feature - extra round
+
 
 
