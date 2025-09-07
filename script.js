@@ -25,6 +25,7 @@ export class Tournament {
 		this.tournamentInfo = this.createTournamentInfo() 
 		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
 		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
+		console.log("New Tournament created", this);
 	}
 
 	createTournamentInfo() {
@@ -46,6 +47,7 @@ export class Tournament {
 
 	saveData(){
         localStorage.setItem('tournamentData', JSON.stringify(this));
+		console.log("Data saved to localStorage", this);
     }
 
 	loadData(){
@@ -55,6 +57,7 @@ export class Tournament {
         	this.rounds = tournamentData.rounds || [];
         	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
     	}
+		console.log("Data loaded from localStorage", this);
 	}
 		
 	generateRandomId() {
@@ -396,7 +399,7 @@ export class Controller {
 	initialize() {
 		// load data from localStorage
 		this.data.loadData()
-		this._loadAllPart2(this.data)
+		this.applyAllData(this.data)
 	}
 
 	newTournament(confirmed = false) {
@@ -409,6 +412,10 @@ export class Controller {
 	}
 
 	clearAll() {
+		// --- Save settings before clearing ---
+    	const savedCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+    	const savedNumRounds = this.data.tournamentInfo.numRounds;
+
 		// clear all Tournament data
 		this.data = new Tournament()
 		this.clearPlayersTable()
@@ -417,10 +424,14 @@ export class Controller {
 		this.clearStandingsTab()
 		this.updateStandingTableNames([])
 		this.unlockWidgets()
-		this.data.saveData()
 		this.openTab('tab1')
-		console.log("All data cleared", this.data)
-		//this.initialize()
+		
+		// --- Restore settings after clearing ---
+		this.data.tournamentInfo.finalStandingsResolvers = savedCriteria;
+    	this.data.tournamentInfo.numRounds = savedNumRounds;
+		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
+		
+		this.data.saveData()
 	}
 
 	unlockWidgets() {
@@ -459,7 +470,6 @@ export class Controller {
 			alert("Not enough players")
 			return
 		}
-
 		this.sendButtonFeedback();
 
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
@@ -589,7 +599,7 @@ export class Controller {
 					}
 				}
 
-				app_inst._loadAllPart2(data_loaded)
+				app_inst.applyAllData(data_loaded)
 			} catch (error) {
 				console.error('Error parsing JSON:', error);
 			}
@@ -597,7 +607,9 @@ export class Controller {
 		reader.readAsText(file);
 	}
 
-	_loadAllPart2(data_loaded) {
+	applyAllData(data_loaded) {
+
+
 		// Apply all data to DOM	
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
@@ -605,7 +617,7 @@ export class Controller {
 		this.data.players = data_loaded.players;
 		this.data.rounds = data_loaded.rounds;
 		this.data.tournamentInfo = data_loaded.tournamentInfo;
-	
+
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Update the standings table names
@@ -826,7 +838,6 @@ export class Controller {
 		// Create the header row
 		let headerRow = table.insertRow();
 		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
-		console.log("generateCrossTable called", this.data)
 		this.data.players.forEach(player => {
 			let th = document.createElement("th");
 			th.textContent = player.name;
@@ -1010,16 +1021,10 @@ export class Controller {
 		reader.readAsText(file);
 	}
 
-	multiRoundChanged(target) {
-		let opt = target.numRounds.selectedIndex
-		this.data.tournamentInfo.numRounds = opt + 1
-	}
-
 	criteriaChanged(target) {
 		let opt = target.criteria.selectedIndex
 		if (opt>=0  && opt < Tournament.criteriaList.length) {
 			this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-
 			this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 		}
 	}
@@ -1050,6 +1055,8 @@ export class Controller {
 	}
 
 	testAll() {
+		this.data.loadData()
+
 		this.importDemo(true);
 		this.randomizePlayers();
 		this.lockAndPairing();
@@ -1116,19 +1123,50 @@ if (typeof window !== 'undefined') {
 }
 
 // Event listeners:
-// Add player
 document.addEventListener("DOMContentLoaded", () => {
+	// Initialize app
+    window.app = new Controller(new Tournament());
+    app.initialize();
+	console.log("App initialized", app.data);
+
     const addBtn = document.getElementById('AddPlayer');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
             app.addPlayerToTable();
         });
     }
-	const numRoundsSelect = document.getElementById('numRounds');
-    if (numRoundsSelect) {
-        numRoundsSelect.addEventListener('change', function() {
-        app.data.tournamentInfo.numRounds = this.selectedIndex + 1;
-		app.data.saveData();
-        });
-	}
+
+	// Settings
+    const numRoundsSelect = document.getElementById('numRounds');
+    numRoundsSelect?.addEventListener('change', function() {
+        app.data.tournamentInfo.numRounds = parseInt(this.value);
+        app.data.saveData();
+    });
+
+	//criteriaChanged(target) {
+	//	let opt = target.criteria.selectedIndex
+	//	if (opt>=0  && opt < Tournament.criteriaList.length) {
+	//		this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
+	//		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
+	//	}
+	//}
+
+
+
+    //const criteriaSelect = document.getElementById('criteriaForm');
+    //criteriaSelect?.addEventListener('change', function() {
+	//	let opt = this.selectedIndex
+	//	app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
+	//	app.data.saveData();
+    //});
+
+    // Sync UI with data model after loading
+	app.data.loadData()	
+
+
+    numRoundsSelect.value = app.data.tournamentInfo.numRounds;
+    //app.updateCriteriaForm(app.data.tournamentInfo.finalStandingsResolvers);
+
+
+    
 });
