@@ -46,7 +46,6 @@ export class Tournament {
 
 	saveData(){
         localStorage.setItem('tournamentData', JSON.stringify(this));
-		console.log("Data saved to localStorage", this);
     }
 
 	loadData(){
@@ -157,7 +156,6 @@ export class Tournament {
 		else if (this.tournamentInfo.numRounds == 4) {
 			this.rounds = this.rounds.concat(round2).concat(round3).concat(round4);
 		}
-		console.log("generatePairings: numRounds = " + this.tournamentInfo.numRounds + ", rounds generated = " + this.rounds.length)
     	// Add result to the pairings - "1" or "0" or "0.5" or ""
 		// brx: changing pair[3] to ResultRow hard way
 		for (let i=0; i<this.rounds.length; i++) {
@@ -398,7 +396,6 @@ export class Controller {
 	initialize() {
 		// load data from localStorage
 		this.data.loadData()
-		console.log("Data loaded from localStorage before calling _loadAllPart2", this.data)
 		this._loadAllPart2(this.data)
 	}
 
@@ -422,6 +419,8 @@ export class Controller {
 		this.unlockWidgets()
 		this.data.saveData()
 		this.openTab('tab1')
+		console.log("All data cleared", this.data)
+		//this.initialize()
 	}
 
 	unlockWidgets() {
@@ -600,7 +599,6 @@ export class Controller {
 
 	_loadAllPart2(data_loaded) {
 		// Apply all data to DOM	
-		console.log("Data loaded before refresh", data_loaded)
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
 
@@ -819,10 +817,16 @@ export class Controller {
 
 	generateCrossTable() {
 		let table = document.getElementById("crossTable");
+		table.innerHTML = ""; // Always clear first
+		// Only generate if there are players
+    	if (!this.data.players || this.data.players.length === 0) {
+    	    return;
+    	}
 
 		// Create the header row
 		let headerRow = table.insertRow();
 		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
+		console.log("generateCrossTable called", this.data)
 		this.data.players.forEach(player => {
 			let th = document.createElement("th");
 			th.textContent = player.name;
@@ -859,7 +863,9 @@ export class Controller {
 	    }
 		// Make "X" in diagonal again (in case of clear)
 		for (let i = 1; i < table.rows.length; i++) {
-			table.rows[i].cells[i].innerText = "X";
+			if (table.rows[i].cells[i]) {
+        		table.rows[i].cells[i].innerText = "X";
+    		}
 		}
 	
 	    // Aggregate results for each player pair
@@ -995,7 +1001,6 @@ export class Controller {
 			rows.forEach(row => {
 				const [name, Elo] = row.split(',');
 				if (name && Elo) {
-					console.log(`Importing player: ${name.trim()} with Elo: ${Elo.trim()}`);
 					if (!app_inst.data.players.some((player) => player.name === name))
 						app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
 				}
