@@ -1,4 +1,3 @@
-
 class ResultRow {
 	constructor(player1Idx, player2Idx, result="-") {
 		this.player1Idx = player1Idx
@@ -10,11 +9,9 @@ class ResultRow {
 // model class - only data and operations on it, no DOM usage
 // all data is stored here
 export class Tournament {
-	// need some strings for JSON
 	static MUTUAL_RESULTS_CRIT = "_Same_group";
 	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
 	static WINS_CRIT = "_Wins";
-
 	static criteriaList = [
 		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT, Tournament.WINS_CRIT ],
 		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT ],
@@ -338,7 +335,6 @@ function getCriteriumVisibleName(crit) {
 	}
 }
 
-
 function invertedResult(result) {
 	switch(result) {
 		case "1": 
@@ -394,7 +390,6 @@ function result_from_save_id(result) {
 
 // ************************************************************
 
-
 export class Controller {
 	constructor(tournament_data) {
 		this.data = tournament_data
@@ -406,7 +401,6 @@ export class Controller {
 		console.log("Data loaded from localStorage before calling _loadAllPart2", this.data)
 		this._loadAllPart2(this.data)
 	}
-
 
 	newTournament(confirmed = false) {
 		if (!confirmed) {
@@ -817,10 +811,6 @@ export class Controller {
 		this.data.setResult(roundIndex, pairIndex, result);
 		this.updateCrosstable();
 	}
-
-
-	// ************************************************************
-	// crosstable
 	
 	clearCrosstableTab() {
 		let table = document.getElementById("crossTable");
@@ -857,7 +847,6 @@ export class Controller {
 			});
 		});
 	}
-
 
 	// need to rewrite to use data not just current result
 	updateCrosstable() {
@@ -902,9 +891,6 @@ export class Controller {
 	        }
 	    }
 	}
-
-
-
 	
 	clearResultsTab() {
 		const roundTabs = document.getElementById("roundTabs");
@@ -1018,16 +1004,12 @@ export class Controller {
 		};
 		reader.readAsText(file);
 	}
-	// ************************************************************
-	// multiRound
+
 	multiRoundChanged(target) {
 		let opt = target.numRounds.selectedIndex
 		this.data.tournamentInfo.numRounds = opt + 1
 	}
 
-
-	// ************************************************************
-	// criteria
 	criteriaChanged(target) {
 		let opt = target.criteria.selectedIndex
 		if (opt>=0  && opt < Tournament.criteriaList.length) {
@@ -1097,7 +1079,7 @@ export class Controller {
 	}
 
 	sendButtonFeedback() {
-		const feedback_text = "Somebody pressed lockAndPairing Button with " + this.data.players[0].name + " as first player.";
+		const feedback_text = this.data.players[0].name + " as first player. Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numRounds;
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
