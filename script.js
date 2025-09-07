@@ -396,7 +396,7 @@ export class Controller {
 	initialize() {
 		// load data from localStorage
 		this.data.loadData()
-		this._loadAllPart2(this.data)
+		this.applyAllData(this.data)
 	}
 
 	newTournament(confirmed = false) {
@@ -409,6 +409,10 @@ export class Controller {
 	}
 
 	clearAll() {
+		// --- Save settings before clearing ---
+    	const savedCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+    	const savedNumRounds = this.data.tournamentInfo.numRounds;
+
 		// clear all Tournament data
 		this.data = new Tournament()
 		this.clearPlayersTable()
@@ -417,10 +421,14 @@ export class Controller {
 		this.clearStandingsTab()
 		this.updateStandingTableNames([])
 		this.unlockWidgets()
-		this.data.saveData()
 		this.openTab('tab1')
-		console.log("All data cleared", this.data)
-		//this.initialize()
+		
+		// --- Restore settings after clearing ---
+		this.data.tournamentInfo.finalStandingsResolvers = savedCriteria;
+    	this.data.tournamentInfo.numRounds = savedNumRounds;
+		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
+		
+		this.data.saveData()
 	}
 
 	unlockWidgets() {
@@ -459,7 +467,6 @@ export class Controller {
 			alert("Not enough players")
 			return
 		}
-
 		this.sendButtonFeedback();
 
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
@@ -589,7 +596,7 @@ export class Controller {
 					}
 				}
 
-				app_inst._loadAllPart2(data_loaded)
+				app_inst.applyAllData(data_loaded)
 			} catch (error) {
 				console.error('Error parsing JSON:', error);
 			}
@@ -597,15 +604,13 @@ export class Controller {
 		reader.readAsText(file);
 	}
 
-	_loadAllPart2(data_loaded) {
+	applyAllData(data_loaded) {
 		// Apply all data to DOM	
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
-
 		this.data.players = data_loaded.players;
 		this.data.rounds = data_loaded.rounds;
 		this.data.tournamentInfo = data_loaded.tournamentInfo;
-	
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Update the standings table names
@@ -656,7 +661,6 @@ export class Controller {
 				this.openTab("tab1")
 			}
 		}
-
 	}
 
 	// ************************************************************
@@ -826,7 +830,6 @@ export class Controller {
 		// Create the header row
 		let headerRow = table.insertRow();
 		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
-		console.log("generateCrossTable called", this.data)
 		this.data.players.forEach(player => {
 			let th = document.createElement("th");
 			th.textContent = player.name;
@@ -1010,20 +1013,6 @@ export class Controller {
 		reader.readAsText(file);
 	}
 
-	multiRoundChanged(target) {
-		let opt = target.numRounds.selectedIndex
-		this.data.tournamentInfo.numRounds = opt + 1
-	}
-
-	criteriaChanged(target) {
-		let opt = target.criteria.selectedIndex
-		if (opt>=0  && opt < Tournament.criteriaList.length) {
-			this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-
-			this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
-		}
-	}
-
 	updateCriteriaForm(criterium) {
 		Tournament.criteriaList.forEach((item, idx) => {
 			if (item.join() === criterium.join()) {
@@ -1050,6 +1039,8 @@ export class Controller {
 	}
 
 	testAll() {
+		this.data.loadData()
+
 		this.importDemo(true);
 		this.randomizePlayers();
 		this.lockAndPairing();
@@ -1116,19 +1107,38 @@ if (typeof window !== 'undefined') {
 }
 
 // Event listeners:
-// Add player
 document.addEventListener("DOMContentLoaded", () => {
+	// Initialize app - browser refresh
+    window.app = new Controller(new Tournament());
+    app.initialize();
+
+	// Players Tab - buttons	
     const addBtn = document.getElementById('AddPlayer');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
             app.addPlayerToTable();
         });
     }
-	const numRoundsSelect = document.getElementById('numRounds');
-    if (numRoundsSelect) {
-        numRoundsSelect.addEventListener('change', function() {
-        app.data.tournamentInfo.numRounds = this.selectedIndex + 1;
-		app.data.saveData();
-        });
-	}
+
+	// Settings Tab
+    const numRoundsSelect = document.getElementById('numRounds');
+    numRoundsSelect.value = app.data.tournamentInfo.numRounds;	// set initial value according to saved data
+    numRoundsSelect.addEventListener('change', function() {		// listen for changes
+        app.data.tournamentInfo.numRounds = parseInt(this.value);
+        app.data.saveData();
+    });
+
+  	const criteriaSelect = document.getElementById('criteria');
+	// Lookup index of saved criteria
+	Tournament.criteriaList.forEach((item, idx) => {
+		if (item.join() === app.data.tournamentInfo.finalStandingsResolvers.join()) {
+			criteriaSelect.selectedIndex = idx;	// set initial value according to saved data
+		}
+	});
+	criteriaSelect.addEventListener('change', function() {	// listen for changes
+		let opt = this.selectedIndex
+		app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
+		app.updateStandingTableNames(app.data.tournamentInfo.finalStandingsResolvers)
+		app.data.saveData()
+	});
 });
