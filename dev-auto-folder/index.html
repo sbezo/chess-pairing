@@ -11,7 +11,7 @@
 	<script type="module" src="script.js"></script>
 	<script src="berger-fide.js"></script>
 
-    <!-- Initialize Controller and Tournament after page loaded-->
+    <!-- Initialize Controller and Tournament after page loaded
 	<script>
 	function _on_DOM_content_loaded(event) {
 		window.app = new Controller(new Tournament());
@@ -19,6 +19,7 @@
 	}
 	addEventListener("DOMContentLoaded", _on_DOM_content_loaded);
 	</script>
+    -->
 </head>
 
 <body>
@@ -124,7 +125,7 @@
 			</select>
 			</form>
             <br>
-            <form id="multiRound" onchange="app.multiRoundChanged(this)">	
+            <form id="multiRound">	
             <label for="numRounds">Number of rounds:</label>
 			<select id="numRounds">
 				<option value="1">1 round</option>
