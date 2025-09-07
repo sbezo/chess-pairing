@@ -25,7 +25,6 @@ export class Tournament {
 		this.tournamentInfo = this.createTournamentInfo() 
 		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
 		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
-		console.log("New Tournament created", this);
 	}
 
 	createTournamentInfo() {
@@ -47,7 +46,6 @@ export class Tournament {
 
 	saveData(){
         localStorage.setItem('tournamentData', JSON.stringify(this));
-		console.log("Data saved to localStorage", this);
     }
 
 	loadData(){
@@ -57,7 +55,6 @@ export class Tournament {
         	this.rounds = tournamentData.rounds || [];
         	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
     	}
-		console.log("Data loaded from localStorage", this);
 	}
 		
 	generateRandomId() {
@@ -608,16 +605,12 @@ export class Controller {
 	}
 
 	applyAllData(data_loaded) {
-
-
 		// Apply all data to DOM	
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
 		this.clearCrosstableTab(); // Clear existing cross table
-
 		this.data.players = data_loaded.players;
 		this.data.rounds = data_loaded.rounds;
 		this.data.tournamentInfo = data_loaded.tournamentInfo;
-
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
 
 		// Update the standings table names
@@ -668,7 +661,6 @@ export class Controller {
 				this.openTab("tab1")
 			}
 		}
-
 	}
 
 	// ************************************************************
@@ -1021,14 +1013,6 @@ export class Controller {
 		reader.readAsText(file);
 	}
 
-	criteriaChanged(target) {
-		let opt = target.criteria.selectedIndex
-		if (opt>=0  && opt < Tournament.criteriaList.length) {
-			this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-			this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
-		}
-	}
-
 	updateCriteriaForm(criterium) {
 		Tournament.criteriaList.forEach((item, idx) => {
 			if (item.join() === criterium.join()) {
@@ -1124,11 +1108,11 @@ if (typeof window !== 'undefined') {
 
 // Event listeners:
 document.addEventListener("DOMContentLoaded", () => {
-	// Initialize app
+	// Initialize app - browser refresh
     window.app = new Controller(new Tournament());
     app.initialize();
-	console.log("App initialized", app.data);
 
+	// Players Tab - buttons	
     const addBtn = document.getElementById('AddPlayer');
     if (addBtn) {
         addBtn.addEventListener('click', () => {
@@ -1136,37 +1120,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-	// Settings
+	// Settings Tab
     const numRoundsSelect = document.getElementById('numRounds');
-    numRoundsSelect?.addEventListener('change', function() {
+    numRoundsSelect.value = app.data.tournamentInfo.numRounds;	// set initial value according to saved data
+    numRoundsSelect.addEventListener('change', function() {		// listen for changes
         app.data.tournamentInfo.numRounds = parseInt(this.value);
         app.data.saveData();
     });
 
-	//criteriaChanged(target) {
-	//	let opt = target.criteria.selectedIndex
-	//	if (opt>=0  && opt < Tournament.criteriaList.length) {
-	//		this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-	//		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
-	//	}
-	//}
-
-
-
-    //const criteriaSelect = document.getElementById('criteriaForm');
-    //criteriaSelect?.addEventListener('change', function() {
-	//	let opt = this.selectedIndex
-	//	app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-	//	app.data.saveData();
-    //});
-
-    // Sync UI with data model after loading
-	app.data.loadData()	
-
-
-    numRoundsSelect.value = app.data.tournamentInfo.numRounds;
-    //app.updateCriteriaForm(app.data.tournamentInfo.finalStandingsResolvers);
-
-
-    
+  	const criteriaSelect = document.getElementById('criteria');
+	// Lookup index of saved criteria
+	Tournament.criteriaList.forEach((item, idx) => {
+		if (item.join() === app.data.tournamentInfo.finalStandingsResolvers.join()) {
+			criteriaSelect.selectedIndex = idx;	// set initial value according to saved data
+		}
+	});
+	criteriaSelect.addEventListener('change', function() {	// listen for changes
+		let opt = this.selectedIndex
+		app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
+		app.updateStandingTableNames(app.data.tournamentInfo.finalStandingsResolvers)
+		app.data.saveData()
+	});
 });
