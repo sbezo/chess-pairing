@@ -1,19 +1,21 @@
-✅ create github action do deploy dev branch to 'chess-pairing.online/dev-auto-folder'
-✅ fix merging dev to main
-✅ multiround
-✅ "Lock&Start pairing" should be red colour
-✅ dorobit link na Facebook page
-✅ duplicate name check from "Load Players"
+# Done
+- create github action do deploy dev branch to 'chess-pairing.online/dev-auto-folder'
+- fix merging dev to main
+- multiround
+- "Lock&Start pairing" should be red colour
+- dorobit link na Facebook page
+- duplicate name check from "Load Players"
+- obcas zle prekresli crosstable, preco? po refreshi je to ok - problem bol v tom, ze sa renderovala tabulka z prazdnych dat a vznikol jeden riadok s "No data"
 
 
 
-
-- prerobit 'on-click' na event listener
+# ToDo
+- prerobit 'on-click' na event listener - priebezne na tom robim
 - rovnaka velkost tabov jednotlivych kol na velkom screene
-- obcas zle prekresli crosstable, preco? po refreshi je to ok
 - zasuvanie crostable a standing na telefone
 - posuvanie about na telefone, optimalizacia
 - nova feature - extra round
+- selenium testy
 
 
 
