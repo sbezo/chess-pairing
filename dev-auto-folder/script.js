@@ -1075,7 +1075,13 @@ export class Controller {
 	}
 
 	sendButtonFeedback() {
-		const feedback_text = this.data.players[0].name + " as first player. Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numRounds;
+		// skip sending feedback for demo players
+		if (["Magnus", "Fabiano", "Hikaru", "Arjun", "Gukesh", "Nodirbek", "Alireza", "Yi", "Ian", "Anand", "test"].includes(this.data.players[0].name)) {
+			console.log("skip feedback for demo players")
+  			return;
+		}
+		const feedback_text = "Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numRounds;
+		console.log("send feedback: " + feedback_text)
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
@@ -1108,8 +1114,22 @@ if (typeof window !== 'undefined') {
 
 // Event listeners:
 document.addEventListener("DOMContentLoaded", () => {
+    // Get visitor timezone
+    let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	timezone = timezone.replace(/\//g, "-");
+
+    // Detect device type
+    let deviceType = "Desktop";
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      deviceType = "Mobile";
+    } else if (/Tablet|iPad/i.test(navigator.userAgent)) {
+      deviceType = "Tablet";
+    }
+
 	// Initialize app - browser refresh
     window.app = new Controller(new Tournament());
+	app.timezone = timezone;
+    app.deviceType = deviceType;
     app.initialize();
 
 	// Players Tab - buttons	
