@@ -4,9 +4,9 @@
 Chess-Pairing software for round-robin chess tournaments.   
 Web is currently hosted on [chess-pairing.online](https://chess-pairing.online)   
 
-Tournament pairings are based on the Berger tables, following the original construction method developed by Richard Schurig.
+More information about project you can find on [https://sbezo.github.io/projects/chess-pairing/](https://sbezo.github.io/projects/chess-pairing/)
 
-Note: Please test the software before use. The software is provided as-is and used at your own risk.
+> Please test the software before use. The software is provided as-is and used at your own risk.
 
 # Releases
   
