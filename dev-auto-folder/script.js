@@ -25,6 +25,7 @@ export class Tournament {
 		this.tournamentInfo = this.createTournamentInfo() 
 		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
 		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
+
 	}
 
 	createTournamentInfo() {
@@ -34,7 +35,7 @@ export class Tournament {
 			// will be generated, when pairing is done or on first save action
 			id : null,
 			werePlayersRandomized : false,
-			numRounds : 1,
+			numCycles : 1,
 			// the order is priority
 			finalStandingsResolvers : [
 				Tournament.MUTUAL_RESULTS_CRIT,
@@ -45,12 +46,19 @@ export class Tournament {
 	}
 
 	saveData(){
+		this.savedAt = Date.now(); // Save current timestamp in milliseconds
         localStorage.setItem('tournamentData', JSON.stringify(this));
     }
 
 	loadData(){
 		let tournamentData = JSON.parse(localStorage.getItem('tournamentData'));
 		if (tournamentData) {
+			const now = Date.now();
+        	const maxAge = 48 * 60 * 60 * 1000; // 48 hours in ms
+        	if (!tournamentData.savedAt || now - tournamentData.savedAt > maxAge) {
+        	    console.log("Saved tournament data is too old, not loading.");
+            	return; // Do not load old data
+        	}
         	this.players = tournamentData.players || [];
         	this.rounds = tournamentData.rounds || [];
         	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
@@ -129,7 +137,7 @@ export class Tournament {
 		// now only Berger method is supported
 	    this.rounds = generateBergerPairingsIdx(this.players.length);
 
-		// create regular and reversed rounds as base for numRounds > 1
+		// create regular and reversed rounds as base for numCycles > 1
 		let round2 = this.rounds.map(round =>
 		  round.map(pair => {
 			return [ pair[1], pair[0] ];  // swap players
@@ -145,15 +153,14 @@ export class Tournament {
 			return [ pair[1], pair[0] ];
 		  })
 		);
-
-		// generate rounds according to numRounds
-		if (this.tournamentInfo.numRounds == 2) {
+		// generate rounds according to numCycles
+		if (this.tournamentInfo.numCycles == 2) {
 			this.rounds = this.rounds.concat(round2);
 		}
-		else if (this.tournamentInfo.numRounds == 3) {
+		else if (this.tournamentInfo.numCycles == 3) {
 			this.rounds = this.rounds.concat(round2).concat(round3);
 		}
-		else if (this.tournamentInfo.numRounds == 4) {
+		else if (this.tournamentInfo.numCycles == 4) {
 			this.rounds = this.rounds.concat(round2).concat(round3).concat(round4);
 		}
     	// Add result to the pairings - "1" or "0" or "0.5" or ""
@@ -411,7 +418,7 @@ export class Controller {
 	clearAll() {
 		// --- Save settings before clearing ---
     	const savedCriteria = this.data.tournamentInfo.finalStandingsResolvers;
-    	const savedNumRounds = this.data.tournamentInfo.numRounds;
+    	const savednumCycles = this.data.tournamentInfo.numCycles;
 
 		// clear all Tournament data
 		this.data = new Tournament()
@@ -425,7 +432,7 @@ export class Controller {
 		
 		// --- Restore settings after clearing ---
 		this.data.tournamentInfo.finalStandingsResolvers = savedCriteria;
-    	this.data.tournamentInfo.numRounds = savedNumRounds;
+    	this.data.tournamentInfo.numCycles = savednumCycles;
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
 		
 		this.data.saveData()
@@ -443,7 +450,7 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
 		document.getElementById("criteria").disabled = false;
-		document.getElementById("numRounds").disabled = false;
+		document.getElementById("numCycles").disabled = false;
 	}
 
 	lockWidgets() {
@@ -459,7 +466,7 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
 		document.getElementById("criteria").disabled = true;
-		document.getElementById("numRounds").disabled = true;
+		document.getElementById("numCycles").disabled = true;
 	}
 
 	lockAndPairing() {
@@ -1080,7 +1087,7 @@ export class Controller {
 			console.log("skip feedback for demo players")
   			return;
 		}
-		const feedback_text = "Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numRounds;
+		const feedback_text = "Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numCycles;
 		console.log("send feedback: " + feedback_text)
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
@@ -1141,10 +1148,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 	// Settings Tab
-    const numRoundsSelect = document.getElementById('numRounds');
-    numRoundsSelect.value = app.data.tournamentInfo.numRounds;	// set initial value according to saved data
-    numRoundsSelect.addEventListener('change', function() {		// listen for changes
-        app.data.tournamentInfo.numRounds = parseInt(this.value);
+    const numCyclesSelect = document.getElementById('numCycles');
+    numCyclesSelect.value = app.data.tournamentInfo.numCycles;	// set initial value according to saved data
+    numCyclesSelect.addEventListener('change', function() {		// listen for changes
+        app.data.tournamentInfo.numCycles = parseInt(this.value);
         app.data.saveData();
     });
 
