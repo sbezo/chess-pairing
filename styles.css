@@ -183,16 +183,7 @@ footer {
         appearance: none;
         background-color: #bcf0a7;
     }
-    #newTournament {
-        width: 205%;
-        margin: 2px 0;
-        padding: 8px;
-        border-radius: 5px;
-        box-sizing: border-box;
-        -webkit-appearance: none;
-        appearance: none;
-        background-color: #f0a7a7;
-    }
+
 
     .tab-container {
         display: flex;
