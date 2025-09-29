@@ -56,7 +56,6 @@ export class Tournament {
 			const now = Date.now();
         	const maxAge = 48 * 60 * 60 * 1000; // 48 hours in ms
         	if (!tournamentData.savedAt || now - tournamentData.savedAt > maxAge) {
-        	    console.log("Saved tournament data is too old, not loading.");
             	return; // Do not load old data
         	}
         	this.players = tournamentData.players || [];
@@ -137,42 +136,30 @@ export class Tournament {
 		// now only Berger method is supported
 	    this.rounds = generateBergerPairingsIdx(this.players.length);
 
-		// create regular and reversed rounds as base for numCycles > 1
-		let round2 = this.rounds.map(round =>
-		  round.map(pair => {
-			return [ pair[1], pair[0] ];  // swap players
-		  })
-		);
-		let round3 = this.rounds.map(round =>
-		  round.map(pair => {
-			return [ pair[0], pair[1] ];
-		  })
-		);
-		let round4 = this.rounds.map(round =>
-		  round.map(pair => {
-			return [ pair[1], pair[0] ];
-		  })
-		);
-		// generate rounds according to numCycles
-		if (this.tournamentInfo.numCycles == 2) {
-			this.rounds = this.rounds.concat(round2);
-		}
-		else if (this.tournamentInfo.numCycles == 3) {
-			this.rounds = this.rounds.concat(round2).concat(round3);
-		}
-		else if (this.tournamentInfo.numCycles == 4) {
-			this.rounds = this.rounds.concat(round2).concat(round3).concat(round4);
-		}
-    	// Add result to the pairings - "1" or "0" or "0.5" or ""
-		// brx: changing pair[3] to ResultRow hard way
-		for (let i=0; i<this.rounds.length; i++) {
-			for (let y=0; y < this.rounds[i].length; y++) {
-				this.rounds[i][y] = new ResultRow(this.rounds[i][y][0], this.rounds[i][y][1], "-");	
-			}
-		}
+		// add results to all pairings
+		this.rounds = this.rounds.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
+
+		// set number of cycles to 1
+		this.tournamentInfo.numCycles = 1
 
 		console.assert(!this.hasTornamentId())
 		this.tournamentInfo.id = this.generateRandomId()
+		this.saveData()
+	}
+
+	extraCycle() {
+		let newCycle = generateBergerPairingsIdx(this.players.length);
+		// setup cycles
+		let cycle1 = newCycle.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
+		let cycle2 = newCycle.map(round => round.map(pair => new ResultRow(pair[1], pair[0], "-")));
+
+		// in case of odd number of curent cycles add cycle1, else cycle2 + add results
+		if (this.tournamentInfo.numCycles % 2 == 1) {
+			this.rounds = this.rounds.concat(cycle2);
+		} else {
+			this.rounds = this.rounds.concat(cycle1);
+		}
+		this.tournamentInfo.numCycles += 1
 		this.saveData()
 	}
 
@@ -418,7 +405,6 @@ export class Controller {
 	clearAll() {
 		// --- Save settings before clearing ---
     	const savedCriteria = this.data.tournamentInfo.finalStandingsResolvers;
-    	const savednumCycles = this.data.tournamentInfo.numCycles;
 
 		// clear all Tournament data
 		this.data = new Tournament()
@@ -429,10 +415,10 @@ export class Controller {
 		this.updateStandingTableNames([])
 		this.unlockWidgets()
 		this.openTab('tab1')
+
 		
 		// --- Restore settings after clearing ---
 		this.data.tournamentInfo.finalStandingsResolvers = savedCriteria;
-    	this.data.tournamentInfo.numCycles = savednumCycles;
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
 		
 		this.data.saveData()
@@ -450,7 +436,6 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
 		document.getElementById("criteria").disabled = false;
-		document.getElementById("numCycles").disabled = false;
 	}
 
 	lockWidgets() {
@@ -466,7 +451,17 @@ export class Controller {
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
 		document.getElementById("criteria").disabled = true;
-		document.getElementById("numCycles").disabled = true;
+	}
+
+	extraCycle() {
+		this.data.extraCycle()
+		// add extra round tabs
+		let c = this.data.rounds.length - this.data.rounds.length / this.data.tournamentInfo.numCycles + 1
+		for (let i = c; i <= (this.data.rounds.length); i++) {
+			this.createRoundTab(i);
+		}
+		this.openRound(c);
+		this.data.saveData()
 	}
 
 	lockAndPairing() {
@@ -1084,11 +1079,9 @@ export class Controller {
 	sendButtonFeedback() {
 		// skip sending feedback for demo players
 		if (["Magnus", "Fabiano", "Hikaru", "Arjun", "Gukesh", "Nodirbek", "Alireza", "Yi", "Ian", "Anand", "test"].includes(this.data.players[0].name)) {
-			console.log("skip feedback for demo players")
   			return;
 		}
 		const feedback_text = "Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numCycles;
-		console.log("send feedback: " + feedback_text)
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
@@ -1139,6 +1132,8 @@ document.addEventListener("DOMContentLoaded", () => {
     app.deviceType = deviceType;
     app.initialize();
 
+
+
 	// Players Tab - buttons	
     const addBtn = document.getElementById('AddPlayer');
     if (addBtn) {
@@ -1147,13 +1142,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+	//Pairing Tab
+	const extraCycle = document.getElementById('extraCycle');
+	if (extraCycle) {
+		extraCycle.addEventListener('click', () => {
+			app.extraCycle();
+		});
+	}
+
 	// Settings Tab
-    const numCyclesSelect = document.getElementById('numCycles');
-    numCyclesSelect.value = app.data.tournamentInfo.numCycles;	// set initial value according to saved data
-    numCyclesSelect.addEventListener('change', function() {		// listen for changes
-        app.data.tournamentInfo.numCycles = parseInt(this.value);
-        app.data.saveData();
-    });
+
 
   	const criteriaSelect = document.getElementById('criteria');
 	// Lookup index of saved criteria

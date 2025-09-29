@@ -66,7 +66,7 @@
             <button onclick="app.saveAll()">Save All</button>
             <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="app.loadAll(event)">
             <button onclick="document.getElementById('jsonFileInput').click()">Load All</button>
-			<!-- <button onclick="app.clearResults()">Clear Results</button> -->
+			<button id="extraCycle">Add Extra Cycle</button>
 			<button id="newTournament" onclick="app.newTournament()">New Tournament</button>
         </div>
         <div id="roundTabs" class="round-container">
@@ -118,17 +118,10 @@
 			</select>
 			</form>
             <br>
-            <form id="multiCycle">	
-            <label for="numCycles">Number of Cycles:</label>
-			<select id="numCycles">
-				<option value="1">1 Cycle</option>
-				<option value="2">2 Cycles</option>
-				<option value="3">3 Cycles</option>
-				<option value="4">4 Cycles</option>
-            </select>
-			</form>
-            <br>
-
+            <p>- New tournament always starts with 1 Cycle</p>
+            <p>- You can add extra cycle anytime by button 'Add Extra Cycle'</p>
+            <p>- Tournament data is saved/loaded automatically in your browser for 48 hours</p>
+            <p>- You can 'Save Players'/'Load Players' or 'Save All'/'Load All' tournament data to external file anytime</p>
         </section>
     </div>
 
