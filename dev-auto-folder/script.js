@@ -462,6 +462,7 @@ export class Controller {
 		}
 		this.openRound(c);
 		this.data.saveData()
+		this.buttonFeedback("extracycle");
 	}
 
 	lockAndPairing() {
@@ -469,7 +470,7 @@ export class Controller {
 			alert("Not enough players")
 			return
 		}
-		this.sendButtonFeedback();
+		this.buttonFeedback("pairing");
 
 		if (!this.data.tournamentInfo.werePlayersRandomized) {
 			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
@@ -1076,12 +1077,21 @@ export class Controller {
 		document.getElementById("feedback").value = "Thank You.";
 	}
 
-	sendButtonFeedback() {
+	buttonFeedback(button) {
+		console.log(button)
 		// skip sending feedback for demo players
 		if (["Magnus", "Fabiano", "Hikaru", "Arjun", "Gukesh", "Nodirbek", "Alireza", "Yi", "Ian", "Anand", "test"].includes(this.data.players[0].name)) {
   			return;
 		}
-		const feedback_text = "Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Rounds: " + this.data.tournamentInfo.numCycles;
+		let feedback_text = "";
+		if (button == "pairing") {
+			feedback_text = "Pairing...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+		}
+		if (button == "extracycle") {			
+			feedback_text = "ExctraCycle...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+		}
+		if (!feedback_text) return;
+		console.log(feedback_text)
 		const myHeaders = new Headers();
     	myHeaders.append("Content-Type", "application/json");		
     	const raw = JSON.stringify({
