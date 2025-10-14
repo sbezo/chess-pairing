@@ -44,6 +44,10 @@ th {
     background-color: #f0a7a7;
     border-radius: 5px;
 }
+#extraCycle{
+    background-color: #4af308;
+    border-radius: 5px;
+}
 .button-container {
     float: right;
 }
@@ -181,7 +185,7 @@ footer {
         box-sizing: border-box;
         -webkit-appearance: none;
         appearance: none;
-        background-color: #bcf0a7;
+        background-color: #4af308;
     }
 
 
