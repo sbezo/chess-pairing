@@ -432,6 +432,9 @@ export class Controller {
 		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
 			button.disabled = false;
 		});
+
+		// Enable AddPlayer button
+		document.getElementById("AddPlayer").disabled = false;
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
@@ -447,6 +450,9 @@ export class Controller {
 		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
 			button.disabled = true;
 		});
+
+		// Dissble AddPlayer button
+		document.getElementById("AddPlayer").disabled = true;
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
@@ -702,7 +708,7 @@ export class Controller {
 
 		nameCell.textContent = name;
 		EloCell.textContent = Elo;
-		actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+		actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
 
 		// Store in variable
 		this.data.addPlayer(name, Number(Elo))
@@ -749,7 +755,7 @@ export class Controller {
 
 			nameCell.textContent = player.name;
 			EloCell.textContent = player.Elo;
-			actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+			actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
 		});
 	}
 	
