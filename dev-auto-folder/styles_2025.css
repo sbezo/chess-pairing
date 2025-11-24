@@ -1,0 +1,265 @@
+:root{
+  /* palette */
+  --primary: #dfc29e;
+  --primary-hover: #B38658;
+  --primary-active: #c79766;
+
+
+  --neutral-100: #FCFAF8;
+  --neutral-200: #F7F3EF;
+  --neutral-300: #f7ede1;
+  --neutral-400: #f4dec1;
+  --text: black;
+
+  --success: #4CAF50;
+  --danger: #f87d72de;
+  --focus-ring: 0 0 0 4px rgba(196,154,108,0.12);
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--neutral-100);
+    color: var(--text);
+}
+
+/* Top Navigation TAB */
+.tab-container {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--neutral-100);
+    overflow-x: auto;
+    max-width: 900px;
+}
+.tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-size: clamp(12px, 2vw, 18px);
+    border-radius: 5px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border: 1px solid white;
+    border-bottom: none;
+    background-color: var(--neutral-400);
+    box-sizing: border-box;
+    white-space: nowrap;
+    transition: all 0.2s ease-in-out;    
+}
+.tab:hover {
+    background-color: var(--neutral-300);
+}
+.tab.active {
+    background-color: var(--neutral-100);
+    border-top: 2px solid black;
+}
+
+/* Manage of top TAB content */
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
+/* Add Player Section  - Inputs and AddPlayer */
+.add-player-container {
+    display: flex;
+    flex-wrap: wrap;    
+}
+.add-player-container input, .add-player-container button {
+    flex: 1 1 auto;
+    width: 100%;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+}
+#AddPlayer {
+    flex: 1 1 auto;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+    background-color: var(--neutral-300);
+}
+/* Hover and Disabled States for AddPalyer button */
+#AddPlayer:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--neutral-400);
+}
+#AddPlayer.disabled {
+    cursor: default;
+}
+@media (min-width: 768px) {
+    .add-player-container {
+        display: flex;
+        width: 30%;
+        flex-wrap: wrap;  /* wrap items if container too narrow */
+        gap: 4px;         /* spacing between items */
+    }
+    .add-player-container input,
+    .add-player-container button {
+        width: auto;      /* shrink to fit content */
+        flex: 1 1 auto;   /* allow flex container to distribute space */
+        min-width: 10px; /* optional minimum width on desktop */
+        margin: 2px;      /* margin on all sides for spacing */
+    }
+}
+
+
+
+/* Buttons */
+.button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.button-container button {
+    flex: 1 1 auto;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+    background-color: var(--primary);
+}
+#lockAndPairButton, #newTournament{
+    background-color: var(--primary-active);
+}
+#lockAndPairButton:hover:not(:disabled), #newTournament:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--danger);
+}
+/* Hover and Disabled States for buttons */
+.button-container button:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--primary-hover);
+}
+.button-container button.disabled {
+    cursor: default;
+}
+
+
+@media (min-width: 768px) {
+    .button-container {
+        display: flex;
+        gap: 12px;
+    }
+    .button-container button {
+        flex: 1 1 auto;
+        margin: 4px;
+        padding: 12px 8px;
+        border-radius: 5px;
+        font-size: clamp(12px, 4vw, 18px);
+        max-width: fit-content;;
+        justify-content: right
+    }
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: clamp(12px, 4vw, 18px);
+    border-radius: 5px;
+    overflow: hidden;
+}
+th, td {
+    border: 1px solid #ddd;       /* softer border */
+    padding: 10px;                /* nicer spacing */
+    text-align: left;
+}
+th {
+    background-color: var(--neutral-300);
+    font-weight: bold;
+}
+.remove-button {
+    padding: 6px 12px;
+    border-radius: 5px;
+    background-color: var(--primary-active);
+}
+
+/* Hover and Disabled States for remove-buttons */
+.remove-button:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--danger);
+}
+.remove-button.disabled {
+    cursor: default;
+}
+
+/* Round Tabs */
+.round-container {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 2px solid white;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+.round-tab {
+    flex: 1 1 auto;
+    min-width: 50%;
+    max-width: 50%;
+    text-align: center;
+    font-size: clamp(12px, 2vw, 18px);
+    border-radius: 5px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border: 1px solid white;
+    border-bottom: none;
+    background-color: var(--neutral-400);
+    box-sizing: border-box;
+    white-space: nowrap;
+    transition: all 0.2s ease-in-out;
+    margin-top: 2px;
+     
+}
+@media (min-width: 768px) {
+    .round-tab {
+        min-width: 10%;
+        max-width: 10%;
+    }
+}
+.round-tab:hover {
+    background-color: var(--neutral-300);
+}
+.round-tab.active {
+    background-color: var(--neutral-100);
+    border-top: 2px solid black;
+}
+.round-content {
+    display: none;
+}
+.round-content.active {
+    display: block;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 5px;
+    position: relative;
+    bottom: 0;
+    width: 90%;
+    background-color: white;
+    border-top: 2px solid black;
+}
+
+/* Facebook Button */
+.fb-button {
+    display: inline-block;
+    background-color: #1877F2; /* Facebook blue */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+
+ /* Management of locked states */
+.locked {
+    opacity: 0.5;
+    pointer-events: none;
+}
