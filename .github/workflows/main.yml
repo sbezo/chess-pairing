@@ -23,6 +23,7 @@ jobs:
         run: |
           sudo mkdir -p /tmp/dev-auto-folder
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
+          sudo rm -rf /tmp/dev-auto-folder/dev-auto-folder
 
       - name: Checkout main branch
         uses: actions/checkout@v3
