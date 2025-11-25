@@ -725,12 +725,12 @@ export class Controller {
 				// alert("Player with same name already in tournament");
 				Swal.fire({
 				  title: "Error",
-				  text: "Please enter name",
+				  text: "Player with same name already in tournament",
 				  icon: "error",
 				  confirmButtonColor: "#d4a15b"
 				});	
-			return
 			}
+			return
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
