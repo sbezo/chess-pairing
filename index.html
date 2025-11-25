@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="canonical" href="https://chess-pairing.online/" />
     <title>Chess-Pairing</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles_2025.css">
     <link rel="icon" href="favicon.png" type="image/x-icon">
 
 </head>
@@ -31,9 +31,11 @@
     <!-- Tab 1: Add Player to Table -->
     <div id="tab1" class="tab-content active">
         <h2>Add Player to Table</h2>
-        <input type="text" id="name" placeholder="Enter name" required>
-        <input type="number" id="Elo" placeholder="Enter Elo" required>
-        <button id="AddPlayer">Add</button>
+        <div class="add-player-container">
+            <input type="text" id="name" placeholder="Enter name" required>
+            <input type="number" id="Elo" placeholder="Enter Elo" required>
+            <button id="AddPlayer">Add</button>
+        </div>
         <div class="button-container">
             <button onclick="app.sortPlayers()">Sort Players</button>
             <button onclick="app.randomizePlayers()">Randomize Players</button>
@@ -152,5 +154,6 @@
     </div>
     <script type="module" src="script.js"></script>
 	<script src="berger-fide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

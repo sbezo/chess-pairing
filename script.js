@@ -393,14 +393,34 @@ export class Controller {
 		this.applyAllData(this.data)
 	}
 
+	//newTournament(confirmed = false) {
+	//	if (!confirmed) {
+	//		if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
+	//			return
+	//		}
+	//	}
+	//	this.clearAll()
+	//}
 	newTournament(confirmed = false) {
-		if (!confirmed) {
-			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
-				return
-			}
-		}
-		this.clearAll()
-	}
+    if (!confirmed) {
+        Swal.fire({
+            title: "Delete All Data?",
+            text: "This will delete all curent tournament data. Do you want to proceed?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#f87d7dff",
+            cancelButtonColor: "#d4a15b",
+            confirmButtonText: "Yes, delete",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.clearAll();
+            }
+        });
+        return;
+    }
+    this.clearAll();
+}
 
 	clearAll() {
 		// --- Save settings before clearing ---
@@ -432,6 +452,9 @@ export class Controller {
 		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
 			button.disabled = false;
 		});
+
+		// Enable AddPlayer button
+		document.getElementById("AddPlayer").disabled = false;
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
@@ -447,6 +470,9 @@ export class Controller {
 		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
 			button.disabled = true;
 		});
+
+		// Dissble AddPlayer button
+		document.getElementById("AddPlayer").disabled = true;
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
@@ -467,16 +493,17 @@ export class Controller {
 
 	lockAndPairing() {
 		if (this.data.players.length < 2) {
-			alert("Not enough players")
+			// alert("Not enough players")
+			Swal.fire({
+			  title: "Error",
+			  text: "Not enough players",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
 			return
 		}
 		this.buttonFeedback("pairing");
 
-		if (!this.data.tournamentInfo.werePlayersRandomized) {
-			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
-				return
-			}
-		}
 		// Update the standings table names (dynamic criteria)
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 		// Add a "Bye" player if the number of players is odd
@@ -680,7 +707,13 @@ export class Controller {
 		if (name && Elo) {
 			this.addPlayerToTableExecute(name, Elo)
 		} else {
-			alert("Please enter name.");
+			// alert("Please enter name.");
+			Swal.fire({
+			  title: "Error",
+			  text: "Please enter name",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
 		}
 	}
 
@@ -689,9 +722,15 @@ export class Controller {
 		if (this.data.players.some((player) => player.name === name)) {
 			// skip alert silently if in batch mode
 			if (!batch) {
-				alert("Player with same name already in tournament");
-			}
+				// alert("Player with same name already in tournament");
+				Swal.fire({
+				  title: "Error",
+				  text: "Please enter name",
+				  icon: "error",
+				  confirmButtonColor: "#d4a15b"
+				});	
 			return
+			}
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
@@ -702,7 +741,7 @@ export class Controller {
 
 		nameCell.textContent = name;
 		EloCell.textContent = Elo;
-		actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+		actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
 
 		// Store in variable
 		this.data.addPlayer(name, Number(Elo))
@@ -749,7 +788,7 @@ export class Controller {
 
 			nameCell.textContent = player.name;
 			EloCell.textContent = player.Elo;
-			actionCell.innerHTML = '<button onclick="app.removePlayer(this)">Remove</button>';
+			actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
 		});
 	}
 	
@@ -792,7 +831,7 @@ export class Controller {
 						<td>${player1Name}</td>
 						<td>${player2Name}</td>
 						<td>
-							<select onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
+							<select class="result-select" onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
 								<option value="-" selected> - </option>
 								<option value="1">1-0</option>
 								<option value="0">0-1</option>

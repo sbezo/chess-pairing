@@ -1,0 +1,307 @@
+:root{
+  /* palette */
+  --buttons-1-base: #f4dec1;
+  --buttons-1-hover: #f7ede1;
+  --buttons-2-base: #9fcd84;
+  --buttons-2-hover: #ebf8e3;
+  --buttons-3-base: #ffb3b3;
+  --buttons-3-hover: #fde5e5;
+
+  /*
+  --buttons-2-base: #e4c9a5;
+  --buttons-2-hover: #f7ede1;
+  */
+
+  --tables-header: #f4dec1;
+
+  --backrgound: white;
+  --tabs-hover: #f7ede1;
+  --tabs-inactive: #f4dec1;
+  --text: black;
+}
+
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--backrgound);
+    color: var(--text);
+}
+
+/* Top Navigation TAB */
+.tab-container {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--backrgound);
+    overflow-x: auto;
+    max-width: 900px;
+}
+.tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-size: clamp(12px, 2vw, 18px);
+    border-radius: 5px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border: 1px solid white;
+    border-bottom: none;
+    background-color: var(--tabs-inactive);
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+.tab:hover {
+    background-color: var(--tabs-hover);
+}
+.tab.active {
+    background-color: var(--backrgound);
+    border-top: 2px solid black;
+}
+
+/* Manage of top TAB content */
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
+/* Add Player Section  - Inputs and AddPlayer */
+.add-player-container {
+    display: flex;
+    flex-wrap: wrap;    
+}
+.add-player-container input, .add-player-container button {
+    flex: 1 1 auto;
+    width: 100%;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+}
+#AddPlayer {
+    flex: 1 1 auto;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+    background-color: var(--buttons-2-base);
+}
+/* Hover and Disabled States for AddPalyer button */
+#AddPlayer:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-2-hover);
+}
+#AddPlayer.disabled {
+    cursor: default;
+}
+@media (min-width: 768px) {
+    .add-player-container {
+        display: flex;
+        width: 30%;
+        flex-wrap: wrap;  /* wrap items if container too narrow */
+        gap: 4px;         /* spacing between items */
+    }
+    .add-player-container input,
+    .add-player-container button {
+        width: auto;      /* shrink to fit content */
+        flex: 1 1 auto;   /* allow flex container to distribute space */
+        min-width: 10px; /* optional minimum width on desktop */
+        margin: 2px;      /* margin on all sides for spacing */
+    }
+}
+
+
+
+/* Buttons */
+.button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.button-container button {
+    flex: 1 1 auto;
+    margin: 4px;
+    padding: 12px 8px;
+    border-radius: 5px;
+    font-size: clamp(12px, 4vw, 18px);
+    background-color: var(--buttons-1-base);
+}
+#lockAndPairButton, #newTournament{
+    background-color: var(--buttons-3-base);
+}
+#lockAndPairButton:hover:not(:disabled), #newTournament:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-3-hover);
+}
+#extraCycle {
+    background-color: var(--buttons-2-base);
+}
+#extraCycle:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-2-hover);
+}
+/* Hover and Disabled States for buttons */
+.button-container button:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-1-hover);
+}
+.button-container button.disabled {
+    cursor: default;
+}
+
+
+@media (min-width: 768px) {
+    .button-container {
+        display: flex;
+        gap: 12px;
+    }
+    .button-container button {
+        flex: 1 1 auto;
+        margin: 4px;
+        padding: 12px 8px;
+        border-radius: 5px;
+        font-size: clamp(12px, 4vw, 18px);
+        max-width: fit-content;;
+        justify-content: right
+    }
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: clamp(12px, 4vw, 18px);
+    border-radius: 5px;
+    overflow: hidden;
+}
+th, td {
+    border: 1px solid #ddd;       /* softer border */
+    padding: 10px;                /* nicer spacing */
+    text-align: left;
+}
+th {
+    background-color: var(--tabs-hover);
+    font-weight: bold;
+}
+.remove-button {
+    padding: 6px 12px;
+    border-radius: 5px;
+    background-color: var(--buttons-3-base);
+}
+
+/* Hover and Disabled States for remove-buttons */
+.remove-button:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-3-hover);
+}
+.remove-button.disabled {
+    cursor: default;
+}
+
+/* Round Tabs */
+.round-container {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 2px solid white;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+.round-tab {
+    flex: 1 1 auto;
+    min-width: 50%;
+    max-width: 50%;
+    text-align: center;
+    font-size: clamp(12px, 2vw, 18px);
+    border-radius: 5px;
+    padding: 8px 4px;
+    cursor: pointer;
+    border: 1px solid white;
+    border-bottom: none;
+    background-color: var(--tabs-inactive);
+    box-sizing: border-box;
+    white-space: nowrap;
+    transition: all 0.2s ease-in-out;
+    margin-top: 2px;
+     
+}
+@media (min-width: 768px) {
+    .round-tab {
+        min-width: 10%;
+        max-width: 10%;
+    }
+}
+.round-tab:hover {
+    background-color: var(--tabs-hover);
+}
+.round-tab.active {
+    background-color: var(--backrgound);
+    border-top: 2px solid black;
+}
+.round-content {
+    display: none;
+}
+.round-content.active {
+    display: block;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 5px;
+    position: relative;
+    bottom: 0;
+    width: 90%;
+    background-color: white;
+    border-top: 2px solid black;
+}
+
+/* Facebook Button */
+.fb-button {
+    display: inline-block;
+    background-color: #1877F2; /* Facebook blue */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+
+/* Apply fixed width ONLY to the table inside tab3 */
+#tab3 table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px auto;
+    table-layout: fixed; /* Ensures uniform column width */
+}
+
+#tab3 th, #tab3 td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+    width: 70px; /* Set a fixed width for all columns */
+}
+
+/* results select */
+.result-select {
+    border-radius: 5px;
+    font-size: clamp(12px, 1vw, 18px);
+    background-color: var(--buttons-1-base);
+
+}
+.result-select:hover {
+    cursor: pointer;
+    background-color: var(--buttons-1-hover);
+}
+
+
+
+
+
+
+ /* Management of locked states */
+.locked {
+    opacity: 0.5;
+    pointer-events: none;
+}
