@@ -393,14 +393,34 @@ export class Controller {
 		this.applyAllData(this.data)
 	}
 
+	//newTournament(confirmed = false) {
+	//	if (!confirmed) {
+	//		if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
+	//			return
+	//		}
+	//	}
+	//	this.clearAll()
+	//}
 	newTournament(confirmed = false) {
-		if (!confirmed) {
-			if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
-				return
-			}
-		}
-		this.clearAll()
-	}
+    if (!confirmed) {
+        Swal.fire({
+            title: "Delete All Data?",
+            text: "This will delete all curent tournament data. Do you want to proceed?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#f87d7dff",
+            cancelButtonColor: "#d4a15b",
+            confirmButtonText: "Yes, delete",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.clearAll();
+            }
+        });
+        return;
+    }
+    this.clearAll();
+}
 
 	clearAll() {
 		// --- Save settings before clearing ---
@@ -473,16 +493,17 @@ export class Controller {
 
 	lockAndPairing() {
 		if (this.data.players.length < 2) {
-			alert("Not enough players")
+			// alert("Not enough players")
+			Swal.fire({
+			  title: "Error",
+			  text: "Not enough players",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
 			return
 		}
 		this.buttonFeedback("pairing");
 
-		if (!this.data.tournamentInfo.werePlayersRandomized) {
-			if (!confirm("The order of players should be randomized.\nDo you want to proceed without randomizing the order ?")) {
-				return
-			}
-		}
 		// Update the standings table names (dynamic criteria)
 		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
 		// Add a "Bye" player if the number of players is odd
@@ -686,7 +707,13 @@ export class Controller {
 		if (name && Elo) {
 			this.addPlayerToTableExecute(name, Elo)
 		} else {
-			alert("Please enter name.");
+			// alert("Please enter name.");
+			Swal.fire({
+			  title: "Error",
+			  text: "Please enter name",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
 		}
 	}
 
@@ -695,9 +722,15 @@ export class Controller {
 		if (this.data.players.some((player) => player.name === name)) {
 			// skip alert silently if in batch mode
 			if (!batch) {
-				alert("Player with same name already in tournament");
-			}
+				// alert("Player with same name already in tournament");
+				Swal.fire({
+				  title: "Error",
+				  text: "Please enter name",
+				  icon: "error",
+				  confirmButtonColor: "#d4a15b"
+				});	
 			return
+			}
 		}
 
 		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];

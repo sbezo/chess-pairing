@@ -2,10 +2,10 @@
   /* palette */
   --buttons-1-base: #f4dec1;
   --buttons-1-hover: #f7ede1;
-  --buttons-2-base: #f4dec1;
-  --buttons-2-hover: #f7ede1;
-  --buttons-3-base: #f4dec1;
-  --buttons-3-hover: #f7ede1;
+  --buttons-2-base: #9fcd84;
+  --buttons-2-hover: #ebf8e3;
+  --buttons-3-base: #ffb3b3;
+  --buttons-3-hover: #fde5e5;
 
   /*
   --buttons-2-base: #e4c9a5;
@@ -289,6 +289,10 @@ footer {
     font-size: clamp(12px, 1vw, 18px);
     background-color: var(--buttons-1-base);
 
+}
+.result-select:hover {
+    cursor: pointer;
+    background-color: var(--buttons-1-hover);
 }
 
 
