@@ -1,25 +1,29 @@
 :root{
   /* palette */
-  --primary: #dfc29e;
-  --primary-hover: #B38658;
-  --primary-active: #c79766;
+  --buttons-1-base: #f4dec1;
+  --buttons-1-hover: #f7ede1;
+  --buttons-2-base: #f4dec1;
+  --buttons-2-hover: #f7ede1;
+  --buttons-3-base: #f4dec1;
+  --buttons-3-hover: #f7ede1;
 
+  /*
+  --buttons-2-base: #e4c9a5;
+  --buttons-2-hover: #f7ede1;
+  */
 
-  --neutral-100: #FCFAF8;
-  --neutral-200: #F7F3EF;
-  --neutral-300: #f7ede1;
-  --neutral-400: #f4dec1;
+  --tables-header: #f4dec1;
+
+  --backrgound: white;
+  --tabs-hover: #f7ede1;
+  --tabs-inactive: #f4dec1;
   --text: black;
-
-  --success: #4CAF50;
-  --danger: #f87d72de;
-  --focus-ring: 0 0 0 4px rgba(196,154,108,0.12);
 }
 
 
 body {
     font-family: Arial, sans-serif;
-    background-color: var(--neutral-100);
+    background-color: var(--backrgound);
     color: var(--text);
 }
 
@@ -27,7 +31,7 @@ body {
 .tab-container {
     display: flex;
     flex-wrap: wrap;
-    border-bottom: 2px solid var(--neutral-100);
+    border-bottom: 2px solid var(--backrgound);
     overflow-x: auto;
     max-width: 900px;
 }
@@ -41,16 +45,15 @@ body {
     cursor: pointer;
     border: 1px solid white;
     border-bottom: none;
-    background-color: var(--neutral-400);
+    background-color: var(--tabs-inactive);
     box-sizing: border-box;
     white-space: nowrap;
-    transition: all 0.2s ease-in-out;    
 }
 .tab:hover {
-    background-color: var(--neutral-300);
+    background-color: var(--tabs-hover);
 }
 .tab.active {
-    background-color: var(--neutral-100);
+    background-color: var(--backrgound);
     border-top: 2px solid black;
 }
 
@@ -81,12 +84,12 @@ body {
     padding: 12px 8px;
     border-radius: 5px;
     font-size: clamp(12px, 4vw, 18px);
-    background-color: var(--neutral-300);
+    background-color: var(--buttons-2-base);
 }
 /* Hover and Disabled States for AddPalyer button */
 #AddPlayer:hover:not(:disabled) {
     cursor: pointer;
-    background-color: var(--neutral-400);
+    background-color: var(--buttons-2-hover);
 }
 #AddPlayer.disabled {
     cursor: default;
@@ -121,19 +124,26 @@ body {
     padding: 12px 8px;
     border-radius: 5px;
     font-size: clamp(12px, 4vw, 18px);
-    background-color: var(--primary);
+    background-color: var(--buttons-1-base);
 }
 #lockAndPairButton, #newTournament{
-    background-color: var(--primary-active);
+    background-color: var(--buttons-3-base);
 }
 #lockAndPairButton:hover:not(:disabled), #newTournament:hover:not(:disabled) {
     cursor: pointer;
-    background-color: var(--danger);
+    background-color: var(--buttons-3-hover);
+}
+#extraCycle {
+    background-color: var(--buttons-2-base);
+}
+#extraCycle:hover:not(:disabled) {
+    cursor: pointer;
+    background-color: var(--buttons-2-hover);
 }
 /* Hover and Disabled States for buttons */
 .button-container button:hover:not(:disabled) {
     cursor: pointer;
-    background-color: var(--primary-hover);
+    background-color: var(--buttons-1-hover);
 }
 .button-container button.disabled {
     cursor: default;
@@ -171,19 +181,19 @@ th, td {
     text-align: left;
 }
 th {
-    background-color: var(--neutral-300);
+    background-color: var(--tabs-hover);
     font-weight: bold;
 }
 .remove-button {
     padding: 6px 12px;
     border-radius: 5px;
-    background-color: var(--primary-active);
+    background-color: var(--buttons-3-base);
 }
 
 /* Hover and Disabled States for remove-buttons */
 .remove-button:hover:not(:disabled) {
     cursor: pointer;
-    background-color: var(--danger);
+    background-color: var(--buttons-3-hover);
 }
 .remove-button.disabled {
     cursor: default;
@@ -208,7 +218,7 @@ th {
     cursor: pointer;
     border: 1px solid white;
     border-bottom: none;
-    background-color: var(--neutral-400);
+    background-color: var(--tabs-inactive);
     box-sizing: border-box;
     white-space: nowrap;
     transition: all 0.2s ease-in-out;
@@ -222,10 +232,10 @@ th {
     }
 }
 .round-tab:hover {
-    background-color: var(--neutral-300);
+    background-color: var(--tabs-hover);
 }
 .round-tab.active {
-    background-color: var(--neutral-100);
+    background-color: var(--backrgound);
     border-top: 2px solid black;
 }
 .round-content {
@@ -256,6 +266,34 @@ footer {
     border-radius: 5px;
     font-weight: bold;
 }
+
+
+/* Apply fixed width ONLY to the table inside tab3 */
+#tab3 table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px auto;
+    table-layout: fixed; /* Ensures uniform column width */
+}
+
+#tab3 th, #tab3 td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+    width: 70px; /* Set a fixed width for all columns */
+}
+
+/* results select */
+.result-select {
+    border-radius: 5px;
+    font-size: clamp(12px, 1vw, 18px);
+    background-color: var(--buttons-1-base);
+
+}
+
+
+
+
 
 
  /* Management of locked states */

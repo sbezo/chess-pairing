@@ -798,7 +798,7 @@ export class Controller {
 						<td>${player1Name}</td>
 						<td>${player2Name}</td>
 						<td>
-							<select onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
+							<select class="result-select" onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
 								<option value="-" selected> - </option>
 								<option value="1">1-0</option>
 								<option value="0">0-1</option>
