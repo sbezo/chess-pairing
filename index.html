@@ -37,7 +37,7 @@
 
     <!-- Tab 1: Add Player to Table -->
     <div id="tab1" class="tab-content active">
-      <h2>Add Player to Table</h2>
+      <h2>Addd Player to Table</h2>
       <div class="add-player-container">
         <input type="text" id="name" placeholder="Enter name" required />
         <input type="number" id="Elo" placeholder="Enter Elo" required />
@@ -56,7 +56,9 @@
           style="display: none"
           onchange="app.importFromCSV(event)"
         />
-        <button onclick="app.importPlayersPopup()">Load Players</button>
+        <button onclick="document.getElementById('csvFileInput').click()">
+          Load Players
+        </button>
         <button onclick="app.importDemo()">Load Demo Players</button>
         <button onclick="app.testAll()">Full Demo</button>
         <button id="lockAndPairButton" onclick="app.lockAndPairing()">
