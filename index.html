@@ -56,9 +56,7 @@
           style="display: none"
           onchange="app.importFromCSV(event)"
         />
-        <button onclick="document.getElementById('csvFileInput').click()">
-          Load Players
-        </button>
+        <button onclick="app.importPlayersPopup()">Load Players</button>
         <button onclick="app.importDemo()">Load Demo Players</button>
         <button onclick="app.testAll()">Full Demo</button>
         <button id="lockAndPairButton" onclick="app.lockAndPairing()">
