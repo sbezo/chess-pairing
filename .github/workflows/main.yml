@@ -21,6 +21,8 @@ jobs:
       - name: Copy dev branch to /tmp/dev-auto-folder
       # /tmp folder is accessible across branch checkouts
         run: |
+          pwd
+          ls -la
           sudo mkdir -p /tmp/dev-auto-folder
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
           sudo rm -rf /tmp/dev-auto-folder/dev-auto-folder
