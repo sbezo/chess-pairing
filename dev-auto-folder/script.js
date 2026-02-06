@@ -1019,6 +1019,32 @@ export class Controller {
 	// CSV
 	
 	exportToCSV() {
+		Swal.fire({
+			title: "Save Players",
+			html: `
+				<div style="text-align: left;">
+					<label for="groupName" style="display: block; margin-bottom: 10px;">Group Name (optional):</label>
+					<input type="text" id="groupName" placeholder="e.g., Tournament 202" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+				</div>
+			`,
+			icon: "question",
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Save",
+			didOpen: () => {
+				document.getElementById("groupName").focus();
+			}
+		}).then((result) => {
+			const groupName = document.getElementById("groupName").value || "players";
+			if (result.isConfirmed){
+				(result.dismiss === Swal.DismissReason.cancel) 
+				this.savePlayersLocally(groupName);
+			}
+		});
+	}
+
+	downloadPlayersCSV(groupName) {
 		let csvContent = "data:text/csv;charset=utf-8,Name,Elo\n";
 		this.data.players.forEach(player => {
 			csvContent += `${player.name},${player.Elo}\n`;
@@ -1027,10 +1053,124 @@ export class Controller {
 		let encodedUri = encodeURI(csvContent);
 		let link = document.createElement("a");
 		link.setAttribute("href", encodedUri);
-		link.setAttribute("download", "players.csv");
+		link.setAttribute("download", groupName + ".csv");
 		document.body.appendChild(link); // Required for FF
 		link.click();
 		document.body.removeChild(link); // Clean up
+		
+		Swal.fire({
+			title: "Downloaded!",
+			text: `Players saved as "${groupName}.csv"`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
+	}
+
+	savePlayersLocally(groupName) {
+		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
+		playerGroups[groupName] = {
+			timestamp: Date.now(),
+			players: this.data.players
+		};
+		localStorage.setItem('playerGroups', JSON.stringify(playerGroups));
+		
+		Swal.fire({
+			title: "Saved!",
+			text: `Player group "${groupName}" saved locally`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
+	}
+
+	importPlayersPopup() {
+		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
+		const savedGroups = Object.keys(playerGroups);
+		
+		let htmlContent = `
+			<div style="text-align: left;">
+				<div style="margin-bottom: 15px;">
+				</div>
+		`;
+		
+		if (savedGroups.length > 0) {
+			htmlContent += `
+				<div style="margin-bottom: 15px;">
+					<label style="display: block; margin-bottom: 10px; font-weight: bold;">Saved Groups:</label>
+					<select id="savedGroupSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+						<option value="">-- Select a group --</option>
+			`;
+			
+			savedGroups.forEach(group => {
+				htmlContent += `<option value="${group}">${group}</option>`;
+			});
+			
+			htmlContent += `
+					</select>
+				</div>
+			`;
+		} else {
+			htmlContent += `
+				<div style="padding: 10px; background-color: #f0f0f0; border-radius: 4px; margin-bottom: 15px;">
+					<p style="margin: 0; color: #666;">No saved player groups yet. Start by loading from computer or saving players.</p>
+				</div>
+			`;
+		}
+		
+		htmlContent += `</div>`;
+		
+		Swal.fire({
+			title: "Load Players",
+			html: htmlContent,
+			icon: "question",
+			showCancelButton: true,
+			showConfirmButton: savedGroups.length > 0,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Load",
+			cancelButtonText: "Cancel",
+			allowOutsideClick: false,
+			didOpen: () => {
+				const loadBtn = document.getElementById('loadFromComputerBtn');
+				if (loadBtn) {
+					loadBtn.addEventListener('click', () => {
+						Swal.close();
+						document.getElementById('csvFileInput').click();
+					});
+				}
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				const selectElement = document.getElementById('savedGroupSelect');
+				const selectedGroup = selectElement?.value;
+				
+				if (selectedGroup && playerGroups[selectedGroup]) {
+					this.loadPlayersFromBrowser(selectedGroup, playerGroups[selectedGroup].players);
+				} else {
+					Swal.fire({
+						title: "Error",
+						text: "Please select a player group",
+						icon: "error",
+						confirmButtonColor: "#d4a15b"
+					});
+				}
+			}
+		});
+	}
+
+	loadPlayersFromBrowser(groupName, players) {
+		players.forEach(player => {
+			if (!this.data.players.some((p) => p.name === player.name)) {
+				this.addPlayerToTableExecute(player.name, player.Elo, true);
+			}
+		});
+		this.updatePlayersTable();
+		
+		Swal.fire({
+			title: "Loaded!",
+			text: `Player group "${groupName}" loaded with ${players.length} players`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
 	}
 
 	importFromCSV(event) {

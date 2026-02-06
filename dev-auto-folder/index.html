@@ -1,166 +1,208 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta property="og:title" content="chess-pairing.online" />
-    <meta property="og:description" content="Free online round-robin chess pairing software. No registration, no pricing, no limits." />
-    <meta property="og:image" content="https://chess-pairing.online/favicon.png" />
+    <meta
+      property="og:description"
+      content="Free online round-robin chess pairing software. No registration, no pricing, no limits."
+    />
+    <meta
+      property="og:image"
+      content="https://chess-pairing.online/favicon.png"
+    />
     <meta property="og:url" content="https://chess-pairing.online" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="description" content="Free online round-robin chess pairing software. No registration, no pricing, no limits.">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="Free online round-robin chess pairing software. No registration, no pricing, no limits."
+    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="canonical" href="https://chess-pairing.online/" />
     <title>Chess-Pairing</title>
-    <link rel="stylesheet" href="styles_2025.css">
-    <link rel="icon" href="favicon.png" type="image/x-icon">
-</head>
+    <link rel="stylesheet" href="styles_2025.css" />
+    <link rel="icon" href="favicon.png" type="image/x-icon" />
+  </head>
 
-<body>
+  <body>
     <!-- Tabs -->
     <div class="tab-container">
-        <div class="tab active" onclick="app.openTab('tab1')">Players</div>
-        <div class="tab" onclick="app.openTab('tab2')">Pairing</div>
-        <div class="tab" onclick="app.openTab('tab3')">Crosstable</div>
-        <div class="tab" onclick="app.openTab('tab4')">Standing</div>
-        <div class="tab" onclick="app.openTab('tab4_5')">Settings</div>
-        <div class="tab" onclick="app.openTab('tab5')">About</div>
+      <div class="tab active" onclick="app.openTab('tab1')">Players</div>
+      <div class="tab" onclick="app.openTab('tab2')">Pairing</div>
+      <div class="tab" onclick="app.openTab('tab3')">Crosstable</div>
+      <div class="tab" onclick="app.openTab('tab4')">Standing</div>
+      <div class="tab" onclick="app.openTab('tab4_5')">Settings</div>
+      <div class="tab" onclick="app.openTab('tab5')">About</div>
     </div>
 
     <!-- Tab 1: Add Player to Table -->
     <div id="tab1" class="tab-content active">
-        <h2>Addd Player to Table</h2>
-        <div class="add-player-container">
-            <input type="text" id="name" placeholder="Enter name" required>
-            <input type="number" id="Elo" placeholder="Enter Elo" required>
-            <button id="AddPlayer">Add</button>
-        </div>
-        <div class="button-container">
-            <button onclick="window.print()">Print</button>
-            <button onclick="app.sortPlayers()">Sort Players</button>
-            <button onclick="app.randomizePlayers()">Randomize Players</button>
-            <button onclick="app.clearPlayersTable()">Clear Table</button>
-            <button onclick="app.exportToCSV()">Save Players</button>
-            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="app.importFromCSV(event)">
-            <button onclick="document.getElementById('csvFileInput').click()">Load Players</button>
-            <button onclick="app.importDemo()">Load Demo Players</button>
-            <button onclick="app.testAll()">Full Demo</button>
-            <button id="lockAndPairButton" onclick="app.lockAndPairing()">Lock & Start Pairing</button>
-        </div>
+      <h2>Addd Player to Table</h2>
+      <div class="add-player-container">
+        <input type="text" id="name" placeholder="Enter name" required />
+        <input type="number" id="Elo" placeholder="Enter Elo" required />
+        <button id="AddPlayer">Add</button>
+      </div>
+      <div class="button-container">
+        <button onclick="window.print()">Print</button>
+        <button onclick="app.sortPlayers()">Sort Players</button>
+        <button onclick="app.randomizePlayers()">Randomize Players</button>
+        <button onclick="app.clearPlayersTable()">Clear Table</button>
+        <button onclick="app.exportToCSV()">Save Players</button>
+        <input
+          type="file"
+          id="csvFileInput"
+          accept=".csv"
+          style="display: none"
+          onchange="app.importFromCSV(event)"
+        />
+        <button onclick="document.getElementById('csvFileInput').click()">
+          Load Players
+        </button>
+        <button onclick="app.importDemo()">Load Demo Players</button>
+        <button onclick="app.testAll()">Full Demo</button>
+        <button id="lockAndPairButton" onclick="app.lockAndPairing()">
+          Lock & Start Pairing
+        </button>
+      </div>
 
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Elo</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Rows will be added here -->
-            </tbody>
-        </table>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Elo</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows will be added here -->
+        </tbody>
+      </table>
     </div>
 
     <!-- Tab 2: Pairing -->
     <div id="tab2" class="tab-content">
-        <h2>Pairing</h2>
-        <div class="button-container">
-            <button onclick="window.print()">Print</button>
-            <button onclick="app.saveAll()">Save All</button>
-            <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="app.loadAll(event)">
-            <button onclick="document.getElementById('jsonFileInput').click()">Load All</button>
-			<button id="extraCycle">Add Extra Cycle</button>
-			<button id="newTournament" onclick="app.newTournament()">New Tournament</button>
-        </div>
-        <div id="roundTabs" class="round-container">
-            <!-- Round tabs will be added here -->
-        </div>
-        <div id="roundContents">
-            <!-- Round contents will be added here -->
-        </div>
+      <h2>Pairing</h2>
+      <div class="button-container">
+        <button onclick="window.print()">Print</button>
+        <button onclick="app.saveAll()">Save All</button>
+        <button id="extraCycle">Add Extra Cycle</button>
+        <button id="newTournament" onclick="app.newTournament()">
+          New Tournament
+        </button>
+      </div>
+      <div id="roundTabs" class="round-container">
+        <!-- Round tabs will be added here -->
+      </div>
+      <div id="roundContents">
+        <!-- Round contents will be added here -->
+      </div>
     </div>
 
     <!-- Tab 3: CrossTable -->
     <div id="tab3" class="tab-content">
-        <h2>Crosstable</h2>
-         <div class="button-container">
-            <button onclick="window.print()">Print</button>
-        </div>
-        <table id="crossTable"></table>
+      <h2>Crosstable</h2>
+      <div class="button-container">
+        <button onclick="window.print()">Print</button>
+      </div>
+      <table id="crossTable"></table>
     </div>
 
     <!-- Tab 4: Standing -->
     <div id="tab4" class="tab-content">
-        <h2>Standing</h2>
-         <div class="button-container">
-            <button onclick="window.print()">Print</button>
-        </div>
-        <table id="standingsTable">
-            <thead>
-                <tr>
-                    <th>Number</th>
-                    <th>Player</th>
-                    <th>Elo</th>
-                    <th>Points</th>
-					<!-- Additional criteria headers will be added here -->
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Standings will be populated here -->
-            </tbody>
-        </table>
+      <h2>Standing</h2>
+      <div class="button-container">
+        <button onclick="window.print()">Print</button>
+      </div>
+      <table id="standingsTable">
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Player</th>
+            <th>Elo</th>
+            <th>Points</th>
+            <!-- Additional criteria headers will be added here -->
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Standings will be populated here -->
+        </tbody>
+      </table>
     </div>
 
     <!-- Tab 4_5: Settings -->
     <div id="tab4_5" class="tab-content">
-        <section id="settings">
-            <h2>Settings</h2>
-            
-		 	<form id="criteriaForm">	
-			<label for="criteria">Final standings criteria (after total score):</label>
-			<select id="criteria">
-				<option value="1">Mutual Results, Berger Score, More Wins</option>
-				<option value="2">Mutual Results, Berger Score</option>
-				<option value="3">Berger Score, Mutual Results, More Wins</option>
-				<option value="4">Berger Score, Mutual Results</option>
-				<option value="5">Berger Score</option>
-			</select>
-			</form>
-            <br>
-            <p>- New tournament always starts with 1 Cycle</p>
-            <p>- You can add extra cycle anytime by button 'Add Extra Cycle'</p>
-            <p>- Tournament data is saved/loaded automatically in your browser for 48 hours</p>
-            <p>- You can 'Save Players'/'Load Players' or 'Save All'/'Load All' tournament data to external file anytime</p>
-        </section>
+      <section id="settings">
+        <h2>Settings</h2>
+
+        <form id="criteriaForm">
+          <label for="criteria"
+            >Final standings criteria (after total score):</label
+          >
+          <select id="criteria">
+            <option value="1">Mutual Results, Berger Score, More Wins</option>
+            <option value="2">Mutual Results, Berger Score</option>
+            <option value="3">Berger Score, Mutual Results, More Wins</option>
+            <option value="4">Berger Score, Mutual Results</option>
+            <option value="5">Berger Score</option>
+          </select>
+        </form>
+        <br />
+        <p>- New tournament always starts with 1 Cycle</p>
+        <p>- You can add extra cycle anytime by button 'Add Extra Cycle'</p>
+        <p>
+          - Tournament data is saved/loaded automatically in your browser for 48
+          hours
+        </p>
+        <p>
+          - You can 'Save Players'/'Load Players' or 'Save All'/'Load All'
+          tournament data to external file anytime
+        </p>
+      </section>
     </div>
 
     <!-- Tab 5: About -->
     <div id="tab5" class="tab-content">
-        <section id="about">
-            <h2>About</h2>
-            <p>Our goal is to provide <strong>the simplest website</strong> for chess round-robin pairing.</p>  
-            <p>It should be no more complicated than a basic calculator;)</p>
-            <br>
-            <p>- No Registration</p>
-            <p>- No Pricing</p>
-            <p>- No Limits</p>
-            <br>
-            <h2>Leave Your Feedback</h2>
-            <textarea id="feedback" rows="4" cols="50"></textarea><br>
-            <button onclick="app.sendFeedback()">Submit</button><br><br>
-            <br>
-            <h2>Or contact us on Facebook</h2>
-            <a href="https://www.facebook.com/profile.php?id=61574243093273" target="_blank" rel="noopener noreferrer" class="fb-button"> Facebook </a>
-               
-        </section>
-        <br><br><br>
-        <footer>
-            <p><small>Stefan Bezo &amp; Juraj Borik, 2025. Repository for this project: <a href="https://github.com/sbezo/chess-pairing" target="_blank">GitHub</a>.</small></p>
-        </footer>
+      <section id="about">
+        <h2>About</h2>
+        <p>
+          Our goal is to provide <strong>the simplest website</strong> for chess
+          round-robin pairing.
+        </p>
+        <p>It should be no more complicated than a basic calculator;</p>
+        <br />
+        <p>- No Registration</p>
+        <p>- No Pricing</p>
+        <p>- No Limits</p>
+        <br />
+        <h2>Leave Your Feedback</h2>
+        <textarea id="feedback" rows="4" cols="50"></textarea><br />
+        <button onclick="app.sendFeedback()">Submit</button><br /><br />
+        <br />
+        <h2>Or contact us on Facebook</h2>
+        <a
+          href="https://www.facebook.com/profile.php?id=61574243093273"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="fb-button"
+        >
+          Facebook
+        </a>
+      </section>
+      <br /><br /><br />
+      <footer>
+        <p>
+          <small
+            >Stefan Bezo &amp; Juraj Borik, 2025. Repository for this project:
+            <a href="https://github.com/sbezo/chess-pairing" target="_blank"
+              >GitHub</a
+            >.</small
+          >
+        </p>
+      </footer>
     </div>
     <script type="module" src="script.js"></script>
-	<script src="berger-fide.js"></script>
+    <script src="berger-fide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</body>
+  </body>
 </html>
