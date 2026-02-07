@@ -1027,7 +1027,7 @@ export class Controller {
 					<input type="text" id="groupName" placeholder="e.g., Tournament 202" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
 				</div>
 			`,
-			icon: "question",
+			icon: "info",
 			showCancelButton: true,
 			confirmButtonColor: "#d4a15b",
 			cancelButtonColor: "#888",
@@ -1121,7 +1121,7 @@ export class Controller {
 		Swal.fire({
 			title: "Load Players",
 			html: htmlContent,
-			icon: "question",
+			icon: "info",
 			showCancelButton: true,
 			showConfirmButton: savedGroups.length > 0,
 			confirmButtonColor: "#d4a15b",
