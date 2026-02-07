@@ -37,14 +37,13 @@
 
     <!-- Tab 1: Add Player to Table -->
     <div id="tab1" class="tab-content active">
-      <h2>Addd Player to Table</h2>
+      <h2>Add Player to Table</h2>
       <div class="add-player-container">
         <input type="text" id="name" placeholder="Enter name" required />
         <input type="number" id="Elo" placeholder="Enter Elo" required />
         <button id="AddPlayer">Add</button>
       </div>
       <div class="button-container">
-        <button onclick="window.print()">Print</button>
         <button onclick="app.sortPlayers()">Sort Players</button>
         <button onclick="app.randomizePlayers()">Randomize Players</button>
         <button onclick="app.clearPlayersTable()">Clear Table</button>
@@ -82,8 +81,6 @@
     <div id="tab2" class="tab-content">
       <h2>Pairing</h2>
       <div class="button-container">
-        <button onclick="window.print()">Print</button>
-        <button onclick="app.saveAll()">Save All</button>
         <button id="extraCycle">Add Extra Cycle</button>
         <button id="newTournament" onclick="app.newTournament()">
           New Tournament
@@ -101,7 +98,6 @@
     <div id="tab3" class="tab-content">
       <h2>Crosstable</h2>
       <div class="button-container">
-        <button onclick="window.print()">Print</button>
       </div>
       <table id="crossTable"></table>
     </div>
@@ -110,7 +106,6 @@
     <div id="tab4" class="tab-content">
       <h2>Standing</h2>
       <div class="button-container">
-        <button onclick="window.print()">Print</button>
       </div>
       <table id="standingsTable">
         <thead>
