@@ -25,9 +25,11 @@ jobs:
           pwd
           ls -la
           sudo mkdir -p /tmp/dev-auto-folder
-          pwd
-          ls
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
+          echo "--------"
+          ls ./
+          echo "--------"
+          ls /tmp/dev-auto-folder
           sudo rm -rf /tmp/dev-auto-folder/dev-auto-folder
 
       - name: Checkout main branch
