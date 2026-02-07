@@ -22,6 +22,8 @@ jobs:
       # /tmp folder is accessible across branch checkouts
         run: |
           sudo mkdir -p /tmp/dev-auto-folder
+          pwd
+          ls
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
           sudo rm -rf /tmp/dev-auto-folder/dev-auto-folder
 
