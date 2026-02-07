@@ -40,6 +40,7 @@ jobs:
           sudo mkdir -p ./dev-auto-folder
           sudo rsync -av /tmp/dev-auto-folder/ ./dev-auto-folder
 
+
       - name: Setup Git
         run: |
           git config --global user.name "github.actions"
