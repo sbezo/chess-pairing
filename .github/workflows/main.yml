@@ -23,10 +23,6 @@ jobs:
         run: |
           sudo mkdir -p /tmp/dev-auto-folder
           sudo rsync -av --exclude='.*' ./ /tmp/dev-auto-folder
-          echo "--------"
-          ls ./
-          echo "--------"
-          ls /tmp/dev-auto-folder
           sudo rm -rf /tmp/dev-auto-folder/dev-auto-folder
 
       - name: Checkout main branch
@@ -38,8 +34,7 @@ jobs:
         run: |
           sudo mkdir -p ./dev-auto-folder
           sudo rsync -av /tmp/dev-auto-folder/ ./dev-auto-folder
-          echo "--------"
-          ls ./dev-auto-folder
+
 
       - name: Setup Git
         run: |
