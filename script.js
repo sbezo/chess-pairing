@@ -1111,7 +1111,7 @@ export class Controller {
 		} else {
 			htmlContent += `
 				<div style="padding: 10px; background-color: #f0f0f0; border-radius: 4px; margin-bottom: 15px;">
-					<p style="margin: 0; color: #666;">No saved player groups yet. Start by loading from computer or saving players.</p>
+					<p style="margin: 0; color: #666;">No saved player groups yet.</p>
 				</div>
 			`;
 		}
