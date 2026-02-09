@@ -1,8 +1,9 @@
-name: Deploy Dev to Subfolder
+name: Multi-Branch Deploy
 
 on:
   push:
     branches:
+      - main
       - dev
 
 permissions:
@@ -12,13 +13,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout dev branch
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to gh-pages branch
+      - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: . 
-          target-folder: dev-auto-folder
-          clean: true
+          folder: .
+          # Logic: If pushing to dev, use 'dev-auto-folder'. Otherwise, use root (/).
+          target-folder: ${{ github.ref == 'refs/heads/dev' && 'dev-auto-folder' || '/' }}
+          clean: false
