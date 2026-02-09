@@ -1,5 +1,5 @@
 # 1. Modify something in dev branch.  
-> Never do directly in main branch.  
+> Never modify code directly in a main branch.  
 
 ```
 git checkout dev
