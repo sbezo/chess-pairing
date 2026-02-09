@@ -1,0 +1,245 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+.tab-container {
+    display: flex;
+    border-bottom: 2px solid white;
+}
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid white;
+    background-color: rgb(210, 210, 210);
+    margin-right: 5px;
+    border-radius: 5px;
+}
+.tab.active {
+    background-color: white;
+    border-top: 2px solid black;
+}
+.tab-content {
+    display: none;
+    padding: 20px;
+    border: 1px solid white;
+    margin-top: -1px;
+}
+.tab-content.active {
+    display: block;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: white;
+}
+#lockAndPairButton, #newTournament{
+    background-color: #f0a7a7;
+    border-radius: 5px;
+}
+#extraCycle{
+    background-color: #4af308;
+    border-radius: 5px;
+}
+.button-container {
+    float: right;
+}
+.button-container button {
+    margin-left: 10px;
+}
+.locked {
+opacity: 0.5;
+pointer-events: none;
+}
+.round-container {
+    margin-top: 20px;
+    width: 80%;
+    gap: 6px;
+
+}
+.round-tab {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 1px solid white;
+    border-bottom: none;
+    background-color: rgb(210, 210, 210);
+    margin-right: 5px;
+    margin-bottom: 5px;;
+    display: inline-block;
+    border-radius: 5px;
+
+}
+.round-tab.active {
+    background-color: white;
+    border-top: 2px solid black;
+}
+.round-content {
+    display: none;
+    padding: 20px;
+    border: 1px solid white
+}
+.round-content.active {
+    display: block;
+}
+
+/* Apply fixed width ONLY to the table inside tab3 */
+#tab3 table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px auto;
+    table-layout: fixed; /* Ensures uniform column width */
+}
+
+#tab3 th, #tab3 td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+    width: 70px; /* Set a fixed width for all columns */
+}
+
+#tab3 th {
+    background-color: white;
+}
+
+#tab3 td.empty {
+    background-color: white;
+}
+
+/* Apply fixed width ONLY to the table inside tab4 */
+
+#tab4 table {
+    border-collapse: collapse;
+    width: 50%;
+    margin: 20px;
+    /*table-layout: fixed; /* Ensures uniform column width */
+}
+
+footer {
+    text-align: center;
+    padding: 5px;
+    position: relative;
+    bottom: 0;
+    width: 90%;
+    background-color: white;
+    border-top: 2px solid black;
+}
+
+.fb-button {
+    display: inline-block;
+    background-color: #1877F2; /* Facebook blue */
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+
+/* Mobile optimization */
+@media only screen and (max-width: 500px) {
+    .button-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* two equal columns */
+        gap: 6px;                       /* space between buttons */
+        margin-top: 0;
+        margin-bottom: 4px;
+        text-align: center;             /* optional */
+    }
+    .round-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* two equal columns */
+        gap: 6px;                       /* space between buttons */
+        margin-top: 120px;
+        text-align: center;
+    }
+    .round-container .round-tab {
+        width: 100%;        /* take full column width */
+        margin: 0;          /* grid already handles spacing */
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 16px;    /* keep iOS from zooming */
+        box-sizing: border-box;
+    }
+
+    .button-container button {
+        width: 100%;        /* take full column width */
+        margin: 0;          /* grid already handles spacing */
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 16px;    /* keep iOS from zooming */
+        box-sizing: border-box;
+    }
+
+    #AddPlayer {
+        width: 100%;
+        margin: 2px 0;
+        padding: 8px;
+        border-radius: 5px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #4af308;
+    }
+
+
+    .tab-container {
+        display: flex;
+        flex-wrap: wrap;
+        border-bottom: 2px solid white;
+        overflow-x: hidden;
+    }
+
+    .tab {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: center;
+        font-size: clamp(8px, 2vw, 12px);
+        border-radius: 5px;
+        padding: 8px 4px;
+        cursor: pointer;
+        border: 1px solid white;
+        border-bottom: none;
+        background-color: rgb(210, 210, 210);
+        box-sizing: border-box;
+    }
+
+    #name, #Elo {
+        width: 96%;
+        margin-bottom: 4px;
+        border-radius: 5px;
+        padding: 6px;
+        box-sizing: border-box;
+    }
+    #tab1 #dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    #tab1 #dataTable th,
+    #tab1 #dataTable td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        text-align: center;
+        padding: 6px 4px;
+    }
+
+    #tab1 {
+        overflow-x: hidden;
+    }
+    #name,
+    #Elo,
+    #AddPlayer,
+    .button-container button {
+        font-size: 16px;
+    }
+
+
+}
