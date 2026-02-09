@@ -1,9 +1,10 @@
-name: Deploy Main to Root
+name: Multi-Branch Deploy
 
 on:
   push:
     branches:
-      - main # Triggers when you push to main
+      - main
+      - dev
 
 permissions:
   contents: write
@@ -12,13 +13,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main branch
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to gh-pages branch (Root)
+      - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
-          folder: . 
-          target-folder: / # This puts main files in the root folder
-          clean: false     # IMPORTANT: Set to false so it doesn't delete the /dev folder
+          folder: .
+          # Logic: If pushing to dev, use 'dev-auto-folder'. Otherwise, use root (/).
+          target-folder: ${{ github.ref == 'refs/heads/dev' && 'dev-auto-folder' || '/' }}
+          clean: false
