@@ -1,0 +1,24 @@
+name: Deploy Main to Root
+
+on:
+  push:
+    branches:
+      - main # Triggers when you push to main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+
+      - name: Deploy to gh-pages branch (Root)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: . 
+          target-folder: / # This puts main files in the root folder
+          clean: false     # IMPORTANT: Set to false so it doesn't delete the /dev folder
