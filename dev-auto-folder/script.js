@@ -1,0 +1,1358 @@
+class ResultRow {
+	constructor(player1Idx, player2Idx, result="-") {
+		this.player1Idx = player1Idx
+		this.player2Idx = player2Idx
+		this.result = result
+	}
+}
+
+// model class - only data and operations on it, no DOM usage
+// all data is stored here
+export class Tournament {
+	static MUTUAL_RESULTS_CRIT = "_Same_group";
+	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
+	static WINS_CRIT = "_Wins";
+	static criteriaList = [
+		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT, Tournament.WINS_CRIT ],
+		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT ],
+		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT, Tournament.WINS_CRIT ],
+		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT],
+		[ Tournament.SONNEBORG_BERGER_CRIT],
+		[],
+		]
+
+	constructor() {
+		this.tournamentInfo = this.createTournamentInfo() 
+		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
+		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
+
+	}
+
+	createTournamentInfo() {
+		return { 
+			// generate random hex string (used for save to distinguish files)
+			// stays same for one tournament
+			// will be generated, when pairing is done or on first save action
+			id : null,
+			werePlayersRandomized : false,
+			numCycles : 1,
+			// the order is priority
+			finalStandingsResolvers : [
+				Tournament.MUTUAL_RESULTS_CRIT,
+				Tournament.SONNEBORG_BERGER_CRIT,
+				Tournament.WINS_CRIT
+			]
+		}
+	}
+
+	saveData(){
+		this.savedAt = Date.now(); // Save current timestamp in milliseconds
+        localStorage.setItem('tournamentData', JSON.stringify(this));
+    }
+
+	loadData(){
+		let tournamentData = JSON.parse(localStorage.getItem('tournamentData'));
+		if (tournamentData) {
+			const now = Date.now();
+        	const maxAge = 48 * 60 * 60 * 1000; // 48 hours in ms
+        	if (!tournamentData.savedAt || now - tournamentData.savedAt > maxAge) {
+            	return; // Do not load old data
+        	}
+        	this.players = tournamentData.players || [];
+        	this.rounds = tournamentData.rounds || [];
+        	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
+    	}
+	}
+		
+	generateRandomId() {
+		// generate random hex string
+		return Math.floor((Math.random()* 1e10 + 1e10)).toString(16)
+	}
+
+	hasTornamentId() {
+		return this.tournamentInfo.id !== null
+	}
+
+	addPlayer(name, Elo, bye /*opt*/) {
+		// if 'bye' set to something other then null, it is bye 
+		// 'bye' variable not used anywhere now
+		this.players.push({ name: name, Elo: Number(Elo), bye: bye });
+		this.saveData()
+	}
+	
+	removePlayer(idx) {
+		this.players.splice(idx, 1); // Remove from players array
+		this.saveData()
+	}
+	
+	lookupPlayerIndex(name) {
+	    // return index of requested player
+	    return this.players.findIndex(player => player.name === name);
+	}
+
+	setResult(roundIndex, resultRow, result) {
+		//if (roundIndex > this.rounds.length || resultRow > this.rounds[roundIndex].length) {
+		//	throw new Error("round or row index out of range");
+		//}
+    	this.rounds[roundIndex][resultRow].result = result;
+		this.saveData()
+	}
+
+	getPlayer(idx) {
+		if (idx <0 || idx > this.players.length) {
+			console.error("player index out of range");
+			throw new Error("player index out of range"); 
+		}
+		return this.players[idx];
+	}
+
+	sortPlayers() {
+		this.players.sort((a, b) => b.Elo - a.Elo); // Sort players by Elo in descending order
+		this.saveData()
+	}
+
+	randomizePlayers() {
+		for (let i = this.players.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[this.players[i], this.players[j]] = [this.players[j], this.players[i]];
+		}
+		this.tournamentInfo.werePlayersRandomized = true
+		this.saveData()
+	}
+
+	addByeIfNeeded() {
+	    // Add a "Bye" player if the number of players is odd
+	    if (this.players.length % 2 !== 0) {
+        	this.players.push({ name: "Bye", Elo: 1400 , bye: true});
+    	}
+	}
+
+	clearResults() {
+		this.rounds = [];
+		this.saveData()
+	}
+
+	generatePairings(method) {
+		// now only Berger method is supported
+	    this.rounds = generateBergerPairingsIdx(this.players.length);
+
+		// add results to all pairings
+		this.rounds = this.rounds.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
+
+		// set number of cycles to 1
+		this.tournamentInfo.numCycles = 1
+
+		console.assert(!this.hasTornamentId())
+		this.tournamentInfo.id = this.generateRandomId()
+		this.saveData()
+	}
+
+	extraCycle() {
+		let newCycle = generateBergerPairingsIdx(this.players.length);
+		// setup cycles
+		let cycle1 = newCycle.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
+		let cycle2 = newCycle.map(round => round.map(pair => new ResultRow(pair[1], pair[0], "-")));
+
+		// in case of odd number of curent cycles add cycle1, else cycle2 + add results
+		if (this.tournamentInfo.numCycles % 2 == 1) {
+			this.rounds = this.rounds.concat(cycle2);
+		} else {
+			this.rounds = this.rounds.concat(cycle1);
+		}
+		this.tournamentInfo.numCycles += 1
+		this.saveData()
+	}
+
+	calculateStandings() {
+		let standings = this.players.map(player => ({
+			name: player.name,
+			elo: player.Elo,
+			points: 0,
+			//berger: 0,
+			additionalCriteria: 
+			  new Array(this.tournamentInfo.finalStandingsResolvers.length).fill(0)
+		}));
+
+		this.calcPoints(standings)
+
+		// calculate additional criteria
+		for (let idx = 0;
+			idx < this.tournamentInfo.finalStandingsResolvers.length;
+			idx++)
+		{
+			let method = this.tournamentInfo.finalStandingsResolvers[idx]
+			switch(method) {
+				case Tournament.MUTUAL_RESULTS_CRIT:
+					this.calcSameGroupScore(standings, idx)
+					break
+				case Tournament.SONNEBORG_BERGER_CRIT:
+					this.calcSonneborgBerger(standings, idx)
+					break
+				case Tournament.WINS_CRIT:
+					this.calcWins(standings, idx)
+					break
+				default:
+					console.error("unknown method")
+			}
+		};
+
+		// sort it all, use all criteria at once
+		standings.sort((a, b) => {
+			if (b.points !== a.points) {
+				return b.points - a.points; // Sort by points
+			} else {
+				// sort by additional criteria
+				for (let idx = 0; 
+					idx< this.tournamentInfo.finalStandingsResolvers.length; 
+					idx++) {
+
+					if (a.additionalCriteria[idx] !== b.additionalCriteria[idx]) {
+						return b.additionalCriteria[idx] - a.additionalCriteria[idx]
+					}
+				}
+				return 0
+			}
+		});
+
+		return standings
+	}
+
+	// Calculate points
+	calcPoints(standings) {
+		this.rounds.forEach(round => {
+			round.forEach(resultRow => {
+				let player1 = standings[resultRow.player1Idx];
+				let player2 = standings[resultRow.player2Idx];
+
+				let result = resultRow.result
+				switch(result) {
+					case "1":
+					case "0":
+					case "0.5":
+					case "0-0":
+						player1.points += resultToValue(result);
+						player2.points += resultToValue(invertedResult(result));
+						break
+					default:
+						;
+				}
+			});
+		});
+	}
+
+	// Calculate Neustadtl Sonneborn–Berger score
+	calcSonneborgBerger(standings, critIdx) {
+		this.rounds.forEach(round => {
+			round.forEach(resultRow => {
+				let player1 = standings[resultRow.player1Idx];
+				let player2 = standings[resultRow.player2Idx];
+				switch(resultRow.result) {
+					case "1":
+						player1.additionalCriteria[critIdx] += player2.points;
+						break;
+					case "0":
+						player2.additionalCriteria[critIdx] += player1.points;
+						break;
+					case "0.5":
+						player1.additionalCriteria[critIdx] += player2.points * 0.5;
+						player2.additionalCriteria[critIdx] += player1.points * 0.5;
+						break;
+					default:
+						;
+				}
+			});
+		});
+	}
+
+	// Calculate mutual results 
+	calcSameGroupScore(standings, critIdx) {
+		this.rounds.forEach(round => {
+			round.forEach(resultRow => {
+				let player1 = standings[resultRow.player1Idx];
+				let player2 = standings[resultRow.player2Idx];
+
+				if (player1.points === player2.points) {
+					switch(resultRow.result) {
+						case "1":
+						case "0":
+						case "0.5":
+						case "0-0":
+							player1.additionalCriteria[critIdx] += 
+								resultToValue(resultRow.result);
+							player2.additionalCriteria[critIdx] += 
+								resultToValue(invertedResult(resultRow.result));
+							break;
+						default:
+							;
+					}
+				}
+			});
+		});
+	}
+
+	// brx: solves case when more than 2 players have same score
+	// Calculate 'More wins better' criterium
+	calcWins(standings, critIdx) {
+		this.rounds.forEach(round => {
+			round.forEach(resultRow => {
+				let player1 = standings[resultRow.player1Idx];
+				let player2 = standings[resultRow.player2Idx];
+				switch(resultRow.result) {
+					case "1":
+					case "0":
+						player1.additionalCriteria[critIdx] += 
+							resultToValue(resultRow.result);
+						player2.additionalCriteria[critIdx] += 
+							resultToValue(invertedResult(resultRow.result));
+						break;
+					default:
+						;
+				}
+			});
+		});
+	}
+}
+
+function getCriteriumVisibleName(crit) {
+	switch(crit) {
+		case Tournament.MUTUAL_RESULTS_CRIT:
+			return "Mutual results"
+		case Tournament.SONNEBORG_BERGER_CRIT:
+			return "Berger Score"
+		case Tournament.WINS_CRIT:
+			return "More Wins"
+		default:
+			console.error("unknown criterium: '" + crit + "'")
+			return "????"
+	}
+}
+
+function invertedResult(result) {
+	switch(result) {
+		case "1": 
+			return "0"
+		case "0":
+			return "1"
+		case "0.5":
+		case "0-0":
+		default:
+			;
+	}
+	return result
+}
+
+function resultToValue(result) {
+	switch(result) {
+		case "1": 
+			return 1
+		case "0":
+		case "0-0":
+			return 0
+		case "0.5":
+			return 0.5
+		default:
+			console.error("result data can't be used as value now");
+	}
+	throw new Error("result data can't be used as value now");
+}
+
+function result_to_save_id(result) {
+	switch(result) {
+		case "0":
+			return 1
+		case "0.5":
+			return 2
+		case "1":
+			return 3
+		case "0-0":
+			return 4
+		default:
+			return 0
+	}
+}
+
+function result_from_save_id(result) {
+	let pos = [ '-', '0', '0.5', '1', '0-0' ]
+
+	if (result >= 0 && result < pos.length)
+		return pos[result]
+	// ? log error ?
+	return '-'
+}
+
+// ************************************************************
+
+export class Controller {
+	constructor(tournament_data) {
+		this.data = tournament_data
+	}
+
+	initialize() {
+		// load data from localStorage
+		this.data.loadData()
+		this.applyAllData(this.data)
+	}
+
+	//newTournament(confirmed = false) {
+	//	if (!confirmed) {
+	//		if (!confirm("THIS WILL DELETE ALL CURRENT DATA,\nPROCEED ?")) {
+	//			return
+	//		}
+	//	}
+	//	this.clearAll()
+	//}
+	newTournament(confirmed = false) {
+    if (!confirmed) {
+        Swal.fire({
+            title: "Delete All Data?",
+            text: "This will delete all curent tournament data. Do you want to proceed?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#f87d7dff",
+            cancelButtonColor: "#d4a15b",
+            confirmButtonText: "Yes, delete",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.clearAll();
+            }
+        });
+        return;
+    }
+    this.clearAll();
+}
+
+	clearAll() {
+		// --- Save settings before clearing ---
+    	const savedCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+
+		// clear all Tournament data
+		this.data = new Tournament()
+		this.clearPlayersTable()
+		this.clearResultsTab()
+		this.clearCrosstableTab()
+		this.clearStandingsTab()
+		this.updateStandingTableNames([])
+		this.unlockWidgets()
+		this.openTab('tab1')
+
+		
+		// --- Restore settings after clearing ---
+		this.data.tournamentInfo.finalStandingsResolvers = savedCriteria;
+		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
+		
+		this.data.saveData()
+	}
+
+	unlockWidgets() {
+		document.getElementById("name").disabled = false;
+		document.getElementById("Elo").disabled = false;
+
+		// Enable buttons
+		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
+			button.disabled = false;
+		});
+
+		// Enable AddPlayer button
+		document.getElementById("AddPlayer").disabled = false;
+		
+		// Optionally, add a visual indication that the table is locked
+		document.getElementById("dataTable").classList.remove('locked');
+		document.getElementById("criteria").disabled = false;
+	}
+
+	lockWidgets() {
+		// Disable input fields
+		document.getElementById("name").disabled = true;
+		document.getElementById("Elo").disabled = true;
+
+		// Disable buttons
+		document.querySelectorAll('#tab1 .button-container button').forEach(button => {
+			button.disabled = true;
+		});
+
+		// Dissble AddPlayer button
+		document.getElementById("AddPlayer").disabled = true;
+		
+		// Optionally, add a visual indication that the table is locked
+		document.getElementById("dataTable").classList.add('locked');
+		document.getElementById("criteria").disabled = true;
+	}
+
+	extraCycle() {
+		this.data.extraCycle()
+		// add extra round tabs
+		let c = this.data.rounds.length - this.data.rounds.length / this.data.tournamentInfo.numCycles + 1
+		for (let i = c; i <= (this.data.rounds.length); i++) {
+			this.createRoundTab(i);
+		}
+		this.openRound(c);
+		this.data.saveData()
+		this.buttonFeedback("extracycle");
+	}
+
+	lockAndPairing() {
+		if (this.data.players.length < 2) {
+			// alert("Not enough players")
+			Swal.fire({
+			  title: "Error",
+			  text: "Not enough players",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
+			return
+		}
+		this.buttonFeedback("pairing");
+
+		// Update the standings table names (dynamic criteria)
+		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
+		// Add a "Bye" player if the number of players is odd
+		this.data.addByeIfNeeded();
+		this.updatePlayersTable();
+		// Generate pairings
+		this.generatePairings("Berger")
+		// Create tabs for all rounds
+		for (let i = 1; i <= (this.data.rounds.length); i++) {
+			this.createRoundTab(i);
+		}
+		// Generate empty cross table
+		this.generateCrossTable();
+		this.lockWidgets()
+		this.openTab('tab3')
+		this.openTab('tab2')
+		// Make round 1 active tab
+		this.openRound(1);
+		this.data.saveData()
+	}
+
+	openRound(roundNumber) {
+		const roundTabs = document.querySelectorAll(".round-tab");
+		const roundContents = document.querySelectorAll(".round-content");
+
+		roundTabs.forEach(tab => tab.classList.remove("active"));
+		roundContents.forEach(content => content.classList.remove("active"));
+
+		document.querySelector(`.round-tab:nth-child(${roundNumber})`).classList.add("active");
+		document.getElementById(`round${roundNumber}`).classList.add("active");
+	}
+
+	openTab(tabId) {
+		let tabs = document.querySelectorAll('.tab-content');
+		let tabButtons = document.querySelectorAll('.tab');
+
+		tabs.forEach(tab => tab.classList.remove('active'));
+		tabButtons.forEach(tab => tab.classList.remove('active'));
+
+		document.getElementById(tabId).classList.add('active');
+		document.querySelector(`.tab-container .tab[onclick="app.openTab('${tabId}')"]`).classList.add('active');
+		if (tabId === "tab4") {
+			this.calculateStandings();
+		}
+	}
+
+	importDemo(confirmed = false) {
+		let players = [
+			{"name": "Magnus", "Elo": 2833},
+			{"name": "Fabiano", "Elo": 2803},
+			{"name": "Hikaru", "Elo": 2802},
+			{"name": "Arjun", "Elo": 2801},
+			{"name": "Gukesh", "Elo": 2777},
+			{"name": "Nodirbek", "Elo": 2766},
+			{"name": "Alireza", "Elo": 2760},
+			{"name": "Yi", "Elo": 2755},
+			{"name": "Ian", "Elo": 2754},
+			{"name": "Anand", "Elo": 2750}
+		]
+
+		players.forEach(player => {
+			// batch mode
+			this.addPlayerToTableExecute(player.name, player.Elo, true);
+		})
+		
+		this.updatePlayersTable();
+	}
+
+	generatePairings(method) {
+		this.data.generatePairings(method)
+	}
+
+	saveAll() {
+		if (!this.data.hasTornamentId()) {
+			// create cookie if there is none (case: pairing was not generated yet)
+			this.data.tournamentInfo.id = this.data.generateRandomId()
+		}
+
+		// brx: changed to save all data
+		const jsonContent = JSON.stringify(this.data);
+
+		// fail: firefox on mobile: opens file instead of download
+		//const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
+		
+		// TODO: test: application/octet-stream
+		// TODO: test: const blob = new Blob([jsonContent], { type: "text/plain;charset=utf-8" }); 
+		const blob = new Blob([jsonContent], { type: "data: attachement/file;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
+
+		const url = URL.createObjectURL(blob); //vytvori temporrary URL pre tento objekt
+		const link = document.createElement("a"); //vytvori anchor element, ktory bude pouzity na ulozenie Blob contentu
+
+		link.href = url;
+		link.download = "tournament-" + this.data.tournamentInfo.id + ".json";
+		document.body.appendChild(link); //vlozi link do body dokumentu, neskor sa nan programom klikne
+		link.click(); //simuluje click to anchor element
+		document.body.removeChild(link); // odstrani element z body dokumentu
+		URL.revokeObjectURL(url); // Clean up the URL object
+	}
+
+	loadAll(event) {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+
+		// save instance of class to reader object to some unique variable
+		reader.source_app_392483928 = this
+		reader.onload = function(e) {
+
+			// app_inst is our saved app instance, because we are in FileReader object ('this' = FileReader)
+			let app_inst = e.target.source_app_392483928
+			const text = e.target.result;
+			try {
+				// brx: load all data instead
+				const data_loaded = JSON.parse(text); // Parse the JSON content
+
+				
+				if (app_inst.data.hasTornamentId() && app_inst.data.tournamentInfo.id !== data_loaded.tournamentInfo.id) {
+					if (!confirm("Data from file are not for current tournament.\nCurrent tournament has id: " 
+						+ app_inst.data.tournamentInfo.id + "\nThis id should be in loaded file name for same tournament.\nReplace ?")) {
+						return;
+					}
+				}
+
+				app_inst.applyAllData(data_loaded)
+			} catch (error) {
+				console.error('Error parsing JSON:', error);
+			}
+		};
+		reader.readAsText(file);
+	}
+
+	applyAllData(data_loaded) {
+		// Apply all data to DOM	
+		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
+		this.clearCrosstableTab(); // Clear existing cross table
+		this.data.players = data_loaded.players;
+		this.data.rounds = data_loaded.rounds;
+		this.data.tournamentInfo = data_loaded.tournamentInfo;
+		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers)
+
+		// Update the standings table names
+		this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers)
+
+		// Create tabs for all rounds
+		for (let i = 1; i <= (this.data.rounds.length); i++) {
+			this.createRoundTab(i);
+		}
+		
+		this.updatePlayersTable()
+
+		// Generate empty cross table
+		this.generateCrossTable();
+		
+		// Update the result values based on the loaded rounds data
+		this.updateResultsTab();
+
+		// lock widgets if pairing was generated
+		if (this.data.rounds.length) {
+			this.lockWidgets()
+		}
+
+		// find first empty result
+		let r = 0
+		let found = false
+		for (; r < this.data.rounds.length; r++) {
+			if (this.data.rounds[r].some(
+				(rowItem) => rowItem.result == "-" || rowItem.result =="")) {
+				found =  true
+				break;
+			}
+		}
+
+		if (found) {
+			// open round tab with missing result
+			this.openTab('tab2')
+			this.openRound(r+1);            
+		}
+		else {
+			if (this.data.rounds.length) {
+				//set the first round as active
+				this.openTab('tab2')
+				this.openRound(1);            
+			}
+			else {
+				// pairing has not been generated yet
+				this.openTab("tab1")
+			}
+		}
+	}
+
+	// ************************************************************
+	// Players Tab(le)
+
+	// HTML API
+	addPlayerToTable() {
+		// Add player & ELO to the table controller
+		let name = document.getElementById("name").value;
+		let Elo = document.getElementById("Elo").value;
+		if (!Elo) {
+			Elo = 1400; // Default Elo value
+		}
+		if (name && Elo) {
+			this.addPlayerToTableExecute(name, Elo)
+		} else {
+			// alert("Please enter name.");
+			Swal.fire({
+			  title: "Error",
+			  text: "Please enter name",
+			  icon: "error",
+			  confirmButtonColor: "#d4a15b"
+			});
+		}
+	}
+
+	addPlayerToTableExecute(name, Elo, batch=false) {
+		// check same player name
+		if (this.data.players.some((player) => player.name === name)) {
+			// skip alert silently if in batch mode
+			if (!batch) {
+				// alert("Player with same name already in tournament");
+				Swal.fire({
+				  title: "Error",
+				  text: "Player with same name already in tournament",
+				  icon: "error",
+				  confirmButtonColor: "#d4a15b"
+				});	
+			}
+			return
+		}
+
+		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+		let newRow = table.insertRow();
+		let nameCell = newRow.insertCell(0);
+		let EloCell = newRow.insertCell(1);
+		let actionCell = newRow.insertCell(2);
+
+		nameCell.textContent = name;
+		EloCell.textContent = Elo;
+		actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
+
+		// Store in variable
+		this.data.addPlayer(name, Number(Elo))
+
+		// Clear input fields
+		document.getElementById("name").value = "";
+		document.getElementById("Elo").value = "";
+	}
+
+	removePlayer(button) {
+		let row = button.parentNode.parentNode;
+		let rowIndex = row.rowIndex - 1; // Adjust for header row
+		this.data.removePlayer(rowIndex)
+		row.parentNode.removeChild(row); // Remove row from table
+	}
+
+	sortPlayers() {
+		this.data.sortPlayers() // Sort players by Elo in descending order
+		this.updatePlayersTable();
+	}
+
+	randomizePlayers() {
+		this.data.randomizePlayers();
+		this.updatePlayersTable();
+	}
+
+	clearPlayersTable() {
+		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+		table.innerHTML = ""; // Clear all rows
+		this.data.players = []; // Clear players array
+		this.data.saveData()
+	}
+	
+	updatePlayersTable() {
+		let table = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+		table.innerHTML = ""; // Clear existing rows
+
+		this.data.players.forEach(player => {
+			let newRow = table.insertRow();
+
+			let nameCell = newRow.insertCell(0);
+			let EloCell = newRow.insertCell(1);
+			let actionCell = newRow.insertCell(2);
+
+			nameCell.textContent = player.name;
+			EloCell.textContent = player.Elo;
+			actionCell.innerHTML = '<button class="remove-button" onclick="app.removePlayer(this)">Remove</button>';
+		});
+	}
+	
+	// ************************************************************
+	// Rounds Tab (also Results)
+	
+	createRoundTab(roundNumber) {
+		const roundTabs = document.getElementById("roundTabs");
+		const roundContents = document.getElementById("roundContents");
+
+		// Create round tab
+		const roundTab = document.createElement("div");
+		roundTab.className = "round-tab";
+		roundTab.innerText = `Round ${roundNumber}`;
+		roundTab.onclick = () => this.openRound(roundNumber); // Use captured round number
+		roundTabs.appendChild(roundTab);
+
+		// Create round content
+		const roundContent = document.createElement("div");
+		roundContent.className = "round-content";
+		roundContent.id = `round${roundNumber}`;
+		roundContent.innerHTML = `<h3>Round ${roundNumber}</h3>`;
+		const table = document.createElement("table");
+		
+		let html = `
+			<thead>
+				<tr>
+					<th>Player 1</th>
+					<th>Player 2</th>
+					<th>Result</th>
+				</tr>
+			</thead>
+			<tbody>`
+
+		this.data.rounds[roundNumber - 1].map((pair, index) => {
+			let player1Name = this.data.players[pair.player1Idx].name
+			let player2Name = this.data.players[pair.player2Idx].name
+			html += `
+					<tr>
+						<td>${player1Name}</td>
+						<td>${player2Name}</td>
+						<td>
+							<select class="result-select" onchange="app.updateResult(${roundNumber - 1}, ${index}, this.value)">
+								<option value="-" selected> - </option>
+								<option value="1">1-0</option>
+								<option value="0">0-1</option>
+								<option value="0.5">Draw</option>
+								<option value="0-0">0-0</option>
+							</select>
+						</td>
+					</tr>
+				`
+		});
+		html += "</tbody>"
+		table.innerHTML = html
+
+		roundContent.appendChild(table);
+		roundContents.appendChild(roundContent);
+		
+		this.openRound(roundNumber);
+	}
+
+	updateResult(roundIndex, pairIndex, result) {
+		this.data.setResult(roundIndex, pairIndex, result);
+		this.updateCrosstable();
+	}
+	
+	clearCrosstableTab() {
+		let table = document.getElementById("crossTable");
+		table.innerHTML = ""; // Clear existing rows
+	}
+
+	generateCrossTable() {
+		let table = document.getElementById("crossTable");
+		table.innerHTML = ""; // Always clear first
+		// Only generate if there are players
+    	if (!this.data.players || this.data.players.length === 0) {
+    	    return;
+    	}
+
+		// Create the header row
+		let headerRow = table.insertRow();
+		headerRow.insertCell().outerHTML = "<th></th>"; // Empty top-left corner
+		this.data.players.forEach(player => {
+			let th = document.createElement("th");
+			th.textContent = player.name;
+			headerRow.appendChild(th);
+		});
+
+		// Create rows for players
+		this.data.players.forEach((player, rowIndex) => {
+			let row = table.insertRow();
+			let nameCell = row.insertCell();
+			nameCell.textContent = player.name; // Player name in the first column
+			nameCell.style.fontWeight = "bold";
+
+			this.data.players.forEach((opponent, colIndex) => {
+				let cell = row.insertCell();
+				if (rowIndex === colIndex) {
+					cell.classList.add("empty"); // Empty cell for self-match
+					cell.textContent = "X";
+				} else {
+					cell.textContent = "-"; // Placeholder for match results
+				}
+			});
+		});
+	}
+
+	// need to rewrite to use data not just current result
+	updateCrosstable() {
+	    let table = document.getElementById("crossTable");
+	    // Clear all cells except headers and player names
+	    for (let i = 1; i < table.rows.length; i++) {
+	        for (let j = 1; j < table.rows[i].cells.length; j++) {
+	            table.rows[i].cells[j].innerText = "";
+	        }
+	    }
+		// Make "X" in diagonal again (in case of clear)
+		for (let i = 1; i < table.rows.length; i++) {
+			if (table.rows[i].cells[i]) {
+        		table.rows[i].cells[i].innerText = "X";
+    		}
+		}
+	
+	    // Aggregate results for each player pair
+	    for (let round of this.data.rounds) {
+	        for (let resultRow of round) {
+	            let ind1 = resultRow.player1Idx;
+	            let ind2 = resultRow.player2Idx;
+	            let result = resultRow.result;
+			
+	            // Skip empty or placeholder results
+	            if (result === "-" || result === "") continue;
+			
+	            let cell = table.rows[ind1 + 1].cells[ind2 + 1];
+	            let reverseCell = table.rows[ind2 + 1].cells[ind1 + 1];
+			
+	            // If there are multiple rounds, concatenate results (or you can sum points, etc.)
+	            if (cell.innerText) {
+	                cell.innerText += " / " + result;
+	                reverseCell.innerText += " / " + invertedResult(result);
+	            } else {
+	                if (result === "0-0") {
+	                    cell.innerText = "0";
+	                    reverseCell.innerText = "0";
+	                } else {
+	                    cell.innerText = result;
+	                    reverseCell.innerText = invertedResult(result);
+	                }
+	            }
+	        }
+	    }
+	}
+	
+	clearResultsTab() {
+		const roundTabs = document.getElementById("roundTabs");
+		const roundContents = document.getElementById("roundContents");
+
+		// Clear existing round tabs and contents
+		roundTabs.innerHTML = "";
+		roundContents.innerHTML = "";
+	}
+
+	// Update the result values based on the loaded rounds data
+	updateResultsTab() {
+		this.data.rounds.forEach((round, roundIndex) => {
+			round.forEach((pair, pairIndex) => {
+				let result = this.data.rounds[roundIndex][pairIndex].result.toString();            
+				let selectElement = document.querySelector(`#round${roundIndex + 1} select[onchange="app.updateResult(${roundIndex}, ${pairIndex}, this.value)"]`);
+				if (selectElement) {
+					selectElement.value = result;
+				}
+				this.updateCrosstable()
+			});
+		});
+	}
+
+	// ************************************************************
+	// standings
+	
+	clearStandingsTab() {
+		let table = document.getElementById("standingsTable").getElementsByTagName('tbody')[0];
+		table.innerHTML = ""; // Clear existing rows
+	}
+	
+	calculateStandings() {
+		let standings = this.data.calculateStandings()
+
+		// Update the standings table
+		let table = document.getElementById("standingsTable").getElementsByTagName('tbody')[0];
+		table.innerHTML = ""; // Clear existing rows
+		for (let i = 0; i < standings.length; i++) {
+			let newRow = table.insertRow();
+			let numberCell = newRow.insertCell(0);
+			let nameCell = newRow.insertCell(1);
+			let eloCell = newRow.insertCell(2);
+			let pointsCell = newRow.insertCell(3);
+			numberCell.textContent = i + 1;
+			nameCell.textContent = standings[i].name;
+			eloCell.textContent = standings[i].elo;
+			pointsCell.textContent = standings[i].points;
+
+			for (let idx = 0; 
+				idx < this.data.tournamentInfo.finalStandingsResolvers.length; 
+				idx++) {
+				let criteriaCell = newRow.insertCell(4+idx);
+				criteriaCell.textContent = standings[i].additionalCriteria[idx];
+			}
+		}
+	}
+
+	updateStandingTableNames(criteriaResolvers) {
+		// dynamicly adds final standing criteria names to Standing Table
+		let table_tr = document.getElementById("standingsTable").getElementsByTagName('tr')[0];
+
+		// first shrink to predefined static names
+		while(table_tr.children.length > 4) {
+			table_tr.removeChild(table_tr.lastChild)
+		}
+
+		criteriaResolvers.forEach(crit => {
+			let elem = document.createElement("th")
+			table_tr.appendChild(elem).textContent= getCriteriumVisibleName(crit)
+		})
+	}
+
+	// ************************************************************
+	// CSV
+	
+	exportToCSV() {
+		Swal.fire({
+			title: "Save Players",
+			html: `
+				<div style="text-align: left;">
+					<label for="groupName" style="display: block; margin-bottom: 10px;">Group Name (optional):</label>
+					<input type="text" id="groupName" placeholder="e.g., Tournament 202" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">
+				</div>
+			`,
+			icon: "info",
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Save",
+			didOpen: () => {
+				document.getElementById("groupName").focus();
+			}
+		}).then((result) => {
+			const groupName = document.getElementById("groupName").value || "players";
+			if (result.isConfirmed){
+				(result.dismiss === Swal.DismissReason.cancel) 
+				this.savePlayersLocally(groupName);
+			}
+		});
+	}
+
+	downloadPlayersCSV(groupName) {
+		let csvContent = "data:text/csv;charset=utf-8,Name,Elo\n";
+		this.data.players.forEach(player => {
+			csvContent += `${player.name},${player.Elo}\n`;
+		});
+
+		let encodedUri = encodeURI(csvContent);
+		let link = document.createElement("a");
+		link.setAttribute("href", encodedUri);
+		link.setAttribute("download", groupName + ".csv");
+		document.body.appendChild(link); // Required for FF
+		link.click();
+		document.body.removeChild(link); // Clean up
+		
+		Swal.fire({
+			title: "Downloaded!",
+			text: `Players saved as "${groupName}.csv"`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
+	}
+
+	savePlayersLocally(groupName) {
+		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
+		playerGroups[groupName] = {
+			timestamp: Date.now(),
+			players: this.data.players
+		};
+		localStorage.setItem('playerGroups', JSON.stringify(playerGroups));
+		
+		Swal.fire({
+			title: "Saved!",
+			text: `Player group "${groupName}" saved locally`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
+	}
+
+	importPlayersPopup() {
+		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
+		const savedGroups = Object.keys(playerGroups);
+		
+		let htmlContent = `
+			<div style="text-align: left;">
+				<div style="margin-bottom: 15px;">
+				</div>
+		`;
+		
+		if (savedGroups.length > 0) {
+			htmlContent += `
+				<div style="margin-bottom: 15px;">
+					<label style="display: block; margin-bottom: 10px; font-weight: bold;">Saved Groups:</label>
+					<select id="savedGroupSelect" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+						<option value="">-- Select a group --</option>
+			`;
+			
+			savedGroups.forEach(group => {
+				htmlContent += `<option value="${group}">${group}</option>`;
+			});
+			
+			htmlContent += `
+					</select>
+				</div>
+			`;
+		} else {
+			htmlContent += `
+				<div style="padding: 10px; background-color: #f0f0f0; border-radius: 4px; margin-bottom: 15px;">
+					<p style="margin: 0; color: #666;">No saved player groups yet.</p>
+				</div>
+			`;
+		}
+		
+		htmlContent += `</div>`;
+		
+		Swal.fire({
+			title: "Load Players",
+			html: htmlContent,
+			icon: "info",
+			showCancelButton: true,
+			showConfirmButton: savedGroups.length > 0,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Load",
+			cancelButtonText: "Cancel",
+			allowOutsideClick: false,
+			didOpen: () => {
+				const loadBtn = document.getElementById('loadFromComputerBtn');
+				if (loadBtn) {
+					loadBtn.addEventListener('click', () => {
+						Swal.close();
+						document.getElementById('csvFileInput').click();
+					});
+				}
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				const selectElement = document.getElementById('savedGroupSelect');
+				const selectedGroup = selectElement?.value;
+				
+				if (selectedGroup && playerGroups[selectedGroup]) {
+					this.loadPlayersFromBrowser(selectedGroup, playerGroups[selectedGroup].players);
+				} else {
+					Swal.fire({
+						title: "Error",
+						text: "Please select a player group",
+						icon: "error",
+						confirmButtonColor: "#d4a15b"
+					});
+				}
+			}
+		});
+	}
+
+	loadPlayersFromBrowser(groupName, players) {
+		players.forEach(player => {
+			if (!this.data.players.some((p) => p.name === player.name)) {
+				this.addPlayerToTableExecute(player.name, player.Elo, true);
+			}
+		});
+		this.updatePlayersTable();
+		
+		Swal.fire({
+			title: "Loaded!",
+			text: `Player group "${groupName}" loaded with ${players.length} players`,
+			icon: "success",
+			confirmButtonColor: "#d4a15b"
+		});
+	}
+
+	importFromCSV(event) {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+		// save instance of class to reader object to some unique variable
+		reader.source_app_392483928 = this
+
+		reader.onload = function(e) {
+			let app_inst = e.target.source_app_392483928
+			const text = e.target.result;
+			const rows = text.split('\n').slice(1); // Skip header row
+			rows.forEach(row => {
+				const [name, Elo] = row.split(',');
+				if (name && Elo) {
+					if (!app_inst.data.players.some((player) => player.name === name))
+						app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
+				}
+			});
+			app_inst.updatePlayersTable();
+		};
+		reader.readAsText(file);
+	}
+
+	updateCriteriaForm(criterium) {
+		Tournament.criteriaList.forEach((item, idx) => {
+			if (item.join() === criterium.join()) {
+				document.getElementById("criteria").selectedIndex = idx;
+			}
+		})
+	}
+
+	// ************************************************************
+	// some test functions
+
+	generateTestResults() {
+		const results = ["1", "0.5", "0"];
+		//const results = ["1", "0.5", "0", "0-0"];
+
+		this.data.rounds.forEach((round, roundIndex) => {
+			round.forEach((pair, pairIndex) => {
+				const random = Math.floor(Math.random() * results.length);
+				this.data.rounds[roundIndex][pairIndex].result = results[random]
+			});
+		});
+	
+		this.updateResultsTab();
+	}
+
+	testAll() {
+		this.data.loadData()
+
+		this.importDemo(true);
+		this.randomizePlayers();
+		this.lockAndPairing();
+
+		this.generateTestResults();
+		this.data.saveData()
+
+		this.openTab('tab3');
+	}
+
+	async sendFeedback() {
+		const feedback_text = sanitizeInput(document.getElementById("feedback").value);
+		const myHeaders = new Headers();
+    	myHeaders.append("Content-Type", "application/json");		
+    	const raw = JSON.stringify({
+    	  "message": feedback_text
+    	});
+	
+    	const requestOptions = {
+    	  method: "POST",
+    	  headers: myHeaders,
+    	  body: raw,
+    	  redirect: "follow"
+    	};
+	
+    	fetch("https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback", requestOptions)
+    	  .then((response) => response.text())
+    	  .then((result) => console.log(result))
+    	  .catch((error) => console.error(error));
+		
+		document.getElementById("feedback").value = "Thank You.";
+	}
+
+	buttonFeedback(button) {
+		console.log(button)
+		// skip sending feedback for demo players
+		if (["Magnus", "Fabiano", "Hikaru", "Arjun", "Gukesh", "Nodirbek", "Alireza", "Yi", "Ian", "Anand", "test"].includes(this.data.players[0].name)) {
+  			return;
+		}
+		let feedback_text = "";
+		if (button == "pairing") {
+			feedback_text = "Pairing...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+		}
+		if (button == "extracycle") {			
+			feedback_text = "ExctraCycle...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+		}
+		if (!feedback_text) return;
+		console.log(feedback_text)
+		const myHeaders = new Headers();
+    	myHeaders.append("Content-Type", "application/json");		
+    	const raw = JSON.stringify({
+    	  "message": feedback_text
+    	});
+	
+    	const requestOptions = {
+    	  method: "POST",
+    	  headers: myHeaders,
+    	  body: raw,
+    	  redirect: "follow"
+    	};
+	
+    	fetch("https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback", requestOptions)
+    	  .then((response) => response.text())
+    	  .then((result) => console.log(result))
+    	  .catch((error) => console.error(error));
+
+	}
+}
+
+function sanitizeInput(input) {
+    return input.replace(/[^a-zA-Z0-9À-ž .,:;!?'\n\r\[\](){}-]/g, '');
+}
+
+if (typeof window !== 'undefined') {
+	window.Controller = Controller
+	window.Tournament = Tournament
+}
+
+// Event listeners:
+document.addEventListener("DOMContentLoaded", () => {
+    // Get visitor timezone
+    let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	timezone = timezone.replace(/\//g, "-");
+
+    // Detect device type
+    let deviceType = "Desktop";
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      deviceType = "Mobile";
+    } else if (/Tablet|iPad/i.test(navigator.userAgent)) {
+      deviceType = "Tablet";
+    }
+
+	// Initialize app - browser refresh
+    window.app = new Controller(new Tournament());
+	app.timezone = timezone;
+    app.deviceType = deviceType;
+    app.initialize();
+
+
+
+	// Players Tab - buttons	
+    const addBtn = document.getElementById('AddPlayer');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            app.addPlayerToTable();
+        });
+    }
+
+	//Pairing Tab
+	const extraCycle = document.getElementById('extraCycle');
+	if (extraCycle) {
+		extraCycle.addEventListener('click', () => {
+			app.extraCycle();
+		});
+	}
+
+	// Settings Tab
+
+
+  	const criteriaSelect = document.getElementById('criteria');
+	// Lookup index of saved criteria
+	Tournament.criteriaList.forEach((item, idx) => {
+		if (item.join() === app.data.tournamentInfo.finalStandingsResolvers.join()) {
+			criteriaSelect.selectedIndex = idx;	// set initial value according to saved data
+		}
+	});
+	criteriaSelect.addEventListener('change', function() {	// listen for changes
+		let opt = this.selectedIndex
+		app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
+		app.updateStandingTableNames(app.data.tournamentInfo.finalStandingsResolvers)
+		app.data.saveData()
+	});
+});

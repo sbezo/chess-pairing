@@ -1,0 +1,17 @@
+- Adding players and generating pairings works correctly.
+- Adding duplicate player
+- Saving and loading players works correctly.
+- Sort player.
+- Randomizing players.
+- Clearing table.
+- Saving Players.
+- Loading Players.
+- Loading Demo plyers.
+- Refresh page during adding players.
+- Lock & Pairing.
+
+
+
+
+
+change num of rounds to 4
