@@ -1,5 +1,8 @@
 # building docker with Selenium from root of repo - just once
 docker build -t chess-pairing-tests ./tests
 
-# running tests from root of repo
+# running local Selenium tests against the checked-out repo
 docker run --rm -v $(pwd):/tests chess-pairing-tests pytest -v
+
+# running optional smoke tests against the real dev deployment
+docker run --rm -v $(pwd):/tests chess-pairing-tests pytest -v --run-remote -m remote
