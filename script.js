@@ -550,15 +550,17 @@ export class Controller {
 			let nameCell = newRow.insertCell(1);
 			let eloCell = newRow.insertCell(2);
 			let pointsCell = newRow.insertCell(3);
+			let performanceCell = newRow.insertCell(4);
 			numberCell.textContent = i + 1;
 			nameCell.textContent = standings[i].name;
 			eloCell.textContent = standings[i].elo;
 			pointsCell.textContent = standings[i].points;
+			performanceCell.textContent = standings[i].performance ?? "-";
 
 			for (let idx = 0; 
 				idx < this.data.tournamentInfo.finalStandingsResolvers.length; 
 				idx++) {
-				let criteriaCell = newRow.insertCell(4+idx);
+				let criteriaCell = newRow.insertCell(5 + idx);
 				criteriaCell.textContent = standings[i].additionalCriteria[idx];
 			}
 		}
@@ -569,7 +571,7 @@ export class Controller {
 		let table_tr = document.getElementById("standingsTable").getElementsByTagName('tr')[0];
 
 		// first shrink to predefined static names
-		while(table_tr.children.length > 4) {
+		while(table_tr.children.length > 5) {
 			table_tr.removeChild(table_tr.lastChild)
 		}
 

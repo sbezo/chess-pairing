@@ -41,6 +41,24 @@ function createResultRows(pairings) {
 	);
 }
 
+function isPerformanceResult(result) {
+	return result === "1" || result === "0" || result === "0.5";
+}
+
+function calculatePerformanceFromScore(avgOpponentElo, scoreRate) {
+	// Clamp perfect and zero scores to a large but finite performance swing.
+	if (scoreRate <= 0) {
+		return Math.round(avgOpponentElo - 800);
+	}
+	if (scoreRate >= 1) {
+		return Math.round(avgOpponentElo + 800);
+	}
+
+	return Math.round(
+		avgOpponentElo + 400 * Math.log10(scoreRate / (1 - scoreRate))
+	);
+}
+
 function getBergerPairingsIdx(size) {
 	if (typeof globalThis.generateBergerPairingsIdx !== "function") {
 		throw new Error("generateBergerPairingsIdx is not available");
@@ -205,6 +223,7 @@ export class Tournament {
 			name: player.name,
 			elo: player.Elo,
 			points: 0,
+			performance: null,
 			additionalCriteria: new Array(
 				this.tournamentInfo.finalStandingsResolvers.length
 			).fill(0),
@@ -232,6 +251,8 @@ export class Tournament {
 					console.error("unknown method");
 			}
 		}
+
+		this.calcPerformance(standings);
 
 		standings.sort((a, b) => {
 			if (b.points !== a.points) {
@@ -338,6 +359,51 @@ export class Tournament {
 						;
 				}
 			});
+		});
+	}
+
+	calcPerformance(standings) {
+		const performanceData = standings.map(() => ({
+			opponentEloSum: 0,
+			scoreSum: 0,
+			gamesCount: 0,
+		}));
+
+		this.rounds.forEach((round) => {
+			round.forEach((resultRow) => {
+				const result = resultRow.result;
+				const player1 = this.players[resultRow.player1Idx];
+				const player2 = this.players[resultRow.player2Idx];
+
+				if (!isPerformanceResult(result) || player1?.bye || player2?.bye) {
+					return;
+				}
+
+				performanceData[resultRow.player1Idx].opponentEloSum += player2.Elo;
+				performanceData[resultRow.player1Idx].scoreSum += resultToValue(result);
+				performanceData[resultRow.player1Idx].gamesCount += 1;
+
+				performanceData[resultRow.player2Idx].opponentEloSum += player1.Elo;
+				performanceData[resultRow.player2Idx].scoreSum += resultToValue(
+					invertedResult(result)
+				);
+				performanceData[resultRow.player2Idx].gamesCount += 1;
+			});
+		});
+
+		standings.forEach((standing, idx) => {
+			const { opponentEloSum, scoreSum, gamesCount } = performanceData[idx];
+			if (gamesCount === 0) {
+				standing.performance = null;
+				return;
+			}
+
+			const avgOpponentElo = opponentEloSum / gamesCount;
+			const scoreRate = scoreSum / gamesCount;
+			standing.performance = calculatePerformanceFromScore(
+				avgOpponentElo,
+				scoreRate
+			);
 		});
 	}
 }
