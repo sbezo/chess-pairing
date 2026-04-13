@@ -47,7 +47,14 @@
         <button onclick="app.sortPlayers()">Sort Players</button>
         <button onclick="app.randomizePlayers()">Randomize Players</button>
         <button onclick="app.clearPlayersTable()">Clear Table</button>
-        <button onclick="app.savePlayersPopup()">Save Players</button>
+        <button onclick="app.exportToCSV()">Save Players</button>
+        <input
+          type="file"
+          id="csvFileInput"
+          accept=".csv"
+          style="display: none"
+          onchange="app.importFromCSV(event)"
+        />
         <button onclick="app.importPlayersPopup()">Load Players</button>
         <button onclick="app.importDemo()">Load Demo Players</button>
         <button onclick="app.testAll()">Full Demo</button>
@@ -107,7 +114,6 @@
             <th>Player</th>
             <th>Elo</th>
             <th>Points</th>
-            <th>Performance</th>
             <!-- Additional criteria headers will be added here -->
           </tr>
         </thead>
@@ -122,15 +128,25 @@
       <section id="settings">
         <h2>Settings</h2>
 
-        <div id="criteriaForm">
-          <p><strong>Final standings criteria:</strong></p>
-          <p id="criteriaValue"></p>
-          <button id="criteriaButton" class="ui-action-button" type="button">Change Criteria</button>
-        </div>
+        <form id="criteriaForm">
+          <label for="criteria"
+            >Final standings criteria (after total score):</label
+          >
+          <select id="criteria">
+            <option value="1">Mutual Results, Berger Score, More Wins</option>
+            <option value="2">Mutual Results, Berger Score</option>
+            <option value="3">Berger Score, Mutual Results, More Wins</option>
+            <option value="4">Berger Score, Mutual Results</option>
+            <option value="5">Berger Score</option>
+          </select>
+        </form>
         <br />
-
-
-
+        <p>- New tournament always starts with 1 Cycle</p>
+        <p>- You can add extra cycle anytime by button 'Add Extra Cycle'</p>
+        <p>
+          - Tournament data is saved/loaded automatically in your browser for 48
+          hours
+        </p>
       </section>
     </div>
 
@@ -147,16 +163,9 @@
         <p>- No Pricing</p>
         <p>- No Limits</p>
         <br />
-
-        <h2>Notes</h2>
-        <br />
-        <p>- New tournament always starts with 1 Cycle</p>
-        <p>- You can add extra cycle anytime by button 'Add Extra Cycle'</p>
-        <br />
-
         <h2>Leave Your Feedback</h2>
         <textarea id="feedback" rows="4" cols="50"></textarea><br />
-        <button class="ui-action-button" onclick="app.sendFeedback()">Submit</button><br /><br />
+        <button onclick="app.sendFeedback()">Submit</button><br /><br />
         <br />
         <h2>Or contact us on Facebook</h2>
         <a
@@ -180,8 +189,8 @@
         </p>
       </footer>
     </div>
-    <script src="berger-fide.js"></script>
     <script type="module" src="script.js"></script>
+    <script src="berger-fide.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </body>
 </html>
