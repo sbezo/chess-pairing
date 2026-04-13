@@ -169,6 +169,7 @@ function getBergerPairingsIdx(size) {
 }
 
 export class Tournament {
+	static SAVED_DATA_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 	static MUTUAL_RESULTS_CRIT = "_Same_group";
 	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
 	static WINS_CRIT = "_Wins";
@@ -219,19 +220,52 @@ export class Tournament {
 		localStorage.setItem("tournamentData", JSON.stringify(this));
 	}
 
-	loadData() {
-		let tournamentData = JSON.parse(localStorage.getItem("tournamentData"));
-		if (tournamentData) {
-			const now = Date.now();
-			const maxAge = 48 * 60 * 60 * 1000;
-			if (!tournamentData.savedAt || now - tournamentData.savedAt > maxAge) {
-				return;
-			}
-			this.players = tournamentData.players || [];
-			this.rounds = tournamentData.rounds || [];
-			this.tournamentInfo =
-				tournamentData.tournamentInfo || this.createTournamentInfo();
+	getSavedTournamentData() {
+		try {
+			return JSON.parse(localStorage.getItem("tournamentData"));
+		} catch (error) {
+			console.error("failed to parse tournamentData", error);
+			return null;
 		}
+	}
+
+	getSavedDataStatus() {
+		const tournamentData = this.getSavedTournamentData();
+		if (!tournamentData) {
+			return {
+				hasSavedData: false,
+				isStale: false,
+				savedAt: null,
+			};
+		}
+
+		const savedAt = tournamentData.savedAt || null;
+		return {
+			hasSavedData: true,
+			isStale:
+				Boolean(savedAt) &&
+				Date.now() - savedAt > Tournament.SAVED_DATA_MAX_AGE_MS,
+			savedAt,
+		};
+	}
+
+	loadData() {
+		let tournamentData = this.getSavedTournamentData();
+		if (!tournamentData) {
+			return false;
+		}
+
+		this.players = tournamentData.players || [];
+		this.rounds = tournamentData.rounds || [];
+		this.tournamentInfo =
+			tournamentData.tournamentInfo || this.createTournamentInfo();
+		this.savedAt = tournamentData.savedAt || null;
+		return true;
+	}
+
+	clearSavedData() {
+		localStorage.removeItem("tournamentData");
+		this.savedAt = null;
 	}
 
 	generateRandomId() {
