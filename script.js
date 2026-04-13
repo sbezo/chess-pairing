@@ -722,6 +722,7 @@ export class Controller {
 
 	openCriteriaPopup() {
 		const currentCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+		const totalOptions = Tournament.criteriaList.length;
 		let selectedIdx = 0;
 
 		Tournament.criteriaList.forEach((item, idx) => {
@@ -730,25 +731,93 @@ export class Controller {
 			}
 		});
 
-		const inputOptions = Tournament.criteriaList.reduce((options, item, idx) => {
-			options[idx] = this.getCriteriaOptionLabel(item);
-			return options;
-		}, {});
-
 		Swal.fire({
 			title: "Final standings criteria",
-			input: "radio",
-			inputOptions,
-			inputValue: String(selectedIdx),
+			html: `
+				<div id="criteriaPicker" style="display: grid; gap: 14px; margin-top: 6px;">
+					<div style="display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 10px;">
+						<button type="button" id="criteriaPrev" style="height: 44px; border: none; border-radius: 999px; background: #efe4d0; color: #6d4c23; font-size: 28px; cursor: pointer;">&#8249;</button>
+						<div style="display: grid; gap: 8px;">
+							<div id="criteriaPreviewPrev" style="padding: 10px 12px; border-radius: 14px; background: #f7f1e7; color: #9b8a72; font-size: 13px; transform: scale(0.95); opacity: 0.75;"></div>
+							<div id="criteriaPreviewCurrent" style="padding: 16px 14px; border-radius: 18px; background: linear-gradient(180deg, #f7e9cd 0%, #ecd29f 100%); color: #5b3c15; font-weight: 700; box-shadow: 0 10px 24px rgba(120, 80, 20, 0.16);"></div>
+							<div id="criteriaPreviewNext" style="padding: 10px 12px; border-radius: 14px; background: #f7f1e7; color: #9b8a72; font-size: 13px; transform: scale(0.95); opacity: 0.75;"></div>
+						</div>
+						<button type="button" id="criteriaNext" style="height: 44px; border: none; border-radius: 999px; background: #efe4d0; color: #6d4c23; font-size: 28px; cursor: pointer;">&#8250;</button>
+					</div>
+					<div id="criteriaMeta" style="font-size: 13px; color: #6d6356; line-height: 1.5;"></div>
+					<div id="criteriaDots" style="display: flex; justify-content: center; gap: 8px;"></div>
+				</div>
+			`,
 			showCancelButton: true,
 			confirmButtonColor: "#d4a15b",
 			cancelButtonColor: "#888",
 			confirmButtonText: "Save",
 			cancelButtonText: "Cancel",
-			inputValidator: (value) => {
-				if (value === null || value === "") {
-					return "Please select criteria";
+			focusConfirm: false,
+			didOpen: () => {
+				const popup = Swal.getPopup();
+				const prevButton = popup.querySelector("#criteriaPrev");
+				const nextButton = popup.querySelector("#criteriaNext");
+				const prevPreview = popup.querySelector("#criteriaPreviewPrev");
+				const currentPreview = popup.querySelector("#criteriaPreviewCurrent");
+				const nextPreview = popup.querySelector("#criteriaPreviewNext");
+				const meta = popup.querySelector("#criteriaMeta");
+				const dots = popup.querySelector("#criteriaDots");
+
+				const getWrappedIndex = (idx) => (idx + totalOptions) % totalOptions;
+				const getCriteriaMeta = (idx) => {
+					const criteria = Tournament.criteriaList[idx];
+					if (criteria.length === 0) {
+						return "Only total points decide the final standing.";
+					}
+					return `Priority order: ${criteria.map((crit, order) => `${order + 1}. ${getCriteriumVisibleName(crit)}`).join("  |  ")}`;
+				};
+
+				const renderDots = () => {
+					dots.innerHTML = "";
+					for (let idx = 0; idx < totalOptions; idx++) {
+						const dot = document.createElement("span");
+						dot.style.width = "9px";
+						dot.style.height = "9px";
+						dot.style.borderRadius = "999px";
+						dot.style.background = idx === selectedIdx ? "#c9913d" : "#e6d8be";
+						dot.style.transition = "all 140ms ease";
+						dots.appendChild(dot);
+					}
+				};
+
+				const renderPicker = () => {
+					prevPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[getWrappedIndex(selectedIdx - 1)]
+					);
+					currentPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[selectedIdx]
+					);
+					nextPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[getWrappedIndex(selectedIdx + 1)]
+					);
+					meta.textContent = getCriteriaMeta(selectedIdx);
+					renderDots();
+				};
+
+				prevButton.addEventListener("click", () => {
+					selectedIdx = getWrappedIndex(selectedIdx - 1);
+					renderPicker();
+				});
+
+				nextButton.addEventListener("click", () => {
+					selectedIdx = getWrappedIndex(selectedIdx + 1);
+					renderPicker();
+				});
+
+				renderPicker();
+			},
+			preConfirm: () => {
+				if (selectedIdx < 0 || selectedIdx >= totalOptions) {
+					Swal.showValidationMessage("Please select criteria");
+					return false;
 				}
+				return String(selectedIdx);
 			}
 		}).then((result) => {
 			if (!result.isConfirmed) {
