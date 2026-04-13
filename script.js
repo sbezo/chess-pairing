@@ -7,6 +7,8 @@ import {
 export class Controller {
 	constructor(tournament_data) {
 		this.data = tournament_data
+		this.sessionStartedAt = Date.now()
+		this.sessionId = this.getOrCreateSessionId()
 	}
 
 	async initialize() {
@@ -109,6 +111,145 @@ export class Controller {
 		this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
 		
 		this.data.saveData()
+	}
+
+	getOrCreateSessionId() {
+		const key = "cpSessionId";
+		const existingId = sessionStorage.getItem(key);
+		if (existingId) {
+			return existingId;
+		}
+
+		const sessionId = Math.random().toString(16).slice(2, 12);
+		sessionStorage.setItem(key, sessionId);
+		return sessionId;
+	}
+
+	isDemoTournament() {
+		const demoPlayers = [
+			"Magnus",
+			"Fabiano",
+			"Hikaru",
+			"Arjun",
+			"Gukesh",
+			"Nodirbek",
+			"Alireza",
+			"Yi",
+			"Ian",
+			"Anand",
+			"test",
+		];
+
+		return (
+			this.data.players.length > 0 &&
+			demoPlayers.includes(this.data.players[0].name)
+		);
+	}
+
+	isEnteredResult(result) {
+		return result !== "-" && result !== "";
+	}
+
+	getEnteredResultsCount() {
+		let count = 0;
+		this.data.rounds.forEach((round) => {
+			round.forEach((resultRow) => {
+				if (this.isEnteredResult(resultRow.result)) {
+					count += 1;
+				}
+			});
+		});
+		return count;
+	}
+
+	getCompletedRoundsCount() {
+		return this.data.rounds.filter(
+			(round) =>
+				round.length > 0 &&
+				round.every((resultRow) => this.isEnteredResult(resultRow.result))
+		).length;
+	}
+
+	getFeedbackMeta(extraMeta = {}) {
+		return {
+			sessionId: this.sessionId,
+			sessionAgeSec: Math.floor((Date.now() - this.sessionStartedAt) / 1000),
+			tournamentId: this.data.tournamentInfo.id || "none",
+			timezone: this.timezone,
+			deviceType: this.deviceType,
+			totalPlayers: this.data.players.length,
+			cycles: this.data.tournamentInfo.numCycles,
+			resultsEntered: this.getEnteredResultsCount(),
+			completedRounds: this.getCompletedRoundsCount(),
+			usedDemoPlayers: this.isDemoTournament(),
+			randomizedPlayers: this.data.tournamentInfo.werePlayersRandomized,
+			...extraMeta,
+		};
+	}
+
+	formatFeedbackMessage(eventName, extraMeta = {}) {
+		const meta = this.getFeedbackMeta(extraMeta);
+		const metaText = Object.entries(meta)
+			.map(([key, value]) => `${key}: ${value}`)
+			.join(", ");
+		return `${eventName}...${metaText}`;
+	}
+
+	sendFeedbackEvent(eventName, extraMeta = {}) {
+		const feedbackText = this.formatFeedbackMessage(eventName, extraMeta);
+		const myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/json");
+		const raw = JSON.stringify({
+			message: feedbackText,
+		});
+
+		const requestOptions = {
+			method: "POST",
+			headers: myHeaders,
+			body: raw,
+			redirect: "follow",
+		};
+
+		fetch(
+			"https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback",
+			requestOptions
+		)
+			.then((response) => response.text())
+			.then((result) => console.log(result))
+			.catch((error) => console.error(error));
+	}
+
+	hasSentResultsThresholdEvent() {
+		const tournamentId = this.data.tournamentInfo.id;
+		if (!tournamentId) {
+			return false;
+		}
+
+		return (
+			sessionStorage.getItem(`cpResultsThresholdSent:${tournamentId}`) === "1"
+		);
+	}
+
+	markResultsThresholdEventSent() {
+		const tournamentId = this.data.tournamentInfo.id;
+		if (!tournamentId) {
+			return;
+		}
+
+		sessionStorage.setItem(`cpResultsThresholdSent:${tournamentId}`, "1");
+	}
+
+	trackResultsThreshold(previousResult, currentResult) {
+		if (
+			!this.isEnteredResult(previousResult) &&
+			this.isEnteredResult(currentResult) &&
+			this.getEnteredResultsCount() > 6 &&
+			!this.hasSentResultsThresholdEvent() &&
+			!this.isDemoTournament()
+		) {
+			this.sendFeedbackEvent("MoreThan6ResultsEntered");
+			this.markResultsThresholdEventSent();
+		}
 	}
 
 	unlockWidgets() {
@@ -461,8 +602,10 @@ export class Controller {
 	}
 
 	updateResult(roundIndex, pairIndex, result) {
+		const previousResult = this.data.rounds[roundIndex][pairIndex].result;
 		this.data.setResult(roundIndex, pairIndex, result);
 		this.updateCrosstable();
+		this.trackResultsThreshold(previousResult, result);
 	}
 	
 	clearCrosstableTab() {
@@ -911,23 +1054,9 @@ export class Controller {
 
 	async sendFeedback() {
 		const feedback_text = sanitizeInput(document.getElementById("feedback").value);
-		const myHeaders = new Headers();
-    	myHeaders.append("Content-Type", "application/json");		
-    	const raw = JSON.stringify({
-    	  "message": feedback_text
-    	});
-	
-    	const requestOptions = {
-    	  method: "POST",
-    	  headers: myHeaders,
-    	  body: raw,
-    	  redirect: "follow"
-    	};
-	
-    	fetch("https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback", requestOptions)
-    	  .then((response) => response.text())
-    	  .then((result) => console.log(result))
-    	  .catch((error) => console.error(error));
+		this.sendFeedbackEvent("UserFeedback", {
+			feedbackText: feedback_text || "empty",
+		});
 		
 		document.getElementById("feedback").value = "Thank You.";
 	}
@@ -935,35 +1064,18 @@ export class Controller {
 	buttonFeedback(button) {
 		console.log(button)
 		// skip sending feedback for demo players
-		if (["Magnus", "Fabiano", "Hikaru", "Arjun", "Gukesh", "Nodirbek", "Alireza", "Yi", "Ian", "Anand", "test"].includes(this.data.players[0].name)) {
+		if (this.isDemoTournament()) {
   			return;
 		}
-		let feedback_text = "";
+		let eventName = "";
 		if (button == "pairing") {
-			feedback_text = "Pairing...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+			eventName = "Pairing";
 		}
 		if (button == "extracycle") {			
-			feedback_text = "ExctraCycle...Timezone: " + this.timezone + ", Device type: " + this.deviceType + ", Total players: " + this.data.players.length + ", Cycles: " + this.data.tournamentInfo.numCycles;
+			eventName = "ExtraCycle";
 		}
-		if (!feedback_text) return;
-		console.log(feedback_text)
-		const myHeaders = new Headers();
-    	myHeaders.append("Content-Type", "application/json");		
-    	const raw = JSON.stringify({
-    	  "message": feedback_text
-    	});
-	
-    	const requestOptions = {
-    	  method: "POST",
-    	  headers: myHeaders,
-    	  body: raw,
-    	  redirect: "follow"
-    	};
-	
-    	fetch("https://p11gt3fasc.execute-api.eu-central-1.amazonaws.com/default/Handle_CP_feddback", requestOptions)
-    	  .then((response) => response.text())
-    	  .then((result) => console.log(result))
-    	  .catch((error) => console.error(error));
+		if (!eventName) return;
+		this.sendFeedbackEvent(eventName);
 
 	}
 }
