@@ -9,10 +9,55 @@ export class Controller {
 		this.data = tournament_data
 	}
 
-	initialize() {
-		// load data from localStorage
-		this.data.loadData()
+	async initialize() {
+		const savedDataStatus = this.data.getSavedDataStatus();
+		if (savedDataStatus.isStale) {
+			const shouldResume = await this.promptResumeSavedTournament(
+				savedDataStatus.savedAt
+			);
+
+			if (shouldResume) {
+				this.data.loadData();
+			} else {
+				this.data.clearSavedData();
+			}
+		} else if (savedDataStatus.hasSavedData) {
+			this.data.loadData();
+		}
+
 		this.applyAllData(this.data)
+	}
+
+	formatSavedTournamentDate(savedAt) {
+		if (!savedAt) {
+			return "an unknown date";
+		}
+
+		return new Intl.DateTimeFormat(undefined, {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(new Date(savedAt));
+	}
+
+	async promptResumeSavedTournament(savedAt) {
+		const savedAtLabel = this.formatSavedTournamentDate(savedAt);
+		const result = await Swal.fire({
+			title: "Old saved tournament found",
+			html: `Found a saved tournament from <strong>${savedAtLabel}</strong>. Do you want to resume it?`,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#f87d7dff",
+			confirmButtonText: "Resume",
+			cancelButtonText: "Discard",
+			reverseButtons: true,
+			allowOutsideClick: false,
+		});
+
+		return result.isConfirmed;
 	}
 
 	//newTournament(confirmed = false) {
