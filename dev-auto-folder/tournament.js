@@ -45,18 +45,120 @@ function isPerformanceResult(result) {
 	return result === "1" || result === "0" || result === "0.5";
 }
 
-function calculatePerformanceFromScore(avgOpponentElo, scoreRate) {
-	// Clamp perfect and zero scores to a large but finite performance swing.
-	if (scoreRate <= 0) {
-		return Math.round(avgOpponentElo - 800);
-	}
-	if (scoreRate >= 1) {
-		return Math.round(avgOpponentElo + 800);
-	}
+const FIDE_DP_TABLE = {
+	0.00: -800,
+	0.01: -677,
+	0.02: -589,
+	0.03: -538,
+	0.04: -501,
+	0.05: -470,
+	0.06: -444,
+	0.07: -422,
+	0.08: -401,
+	0.09: -383,
+	0.10: -366,
+	0.11: -351,
+	0.12: -336,
+	0.13: -322,
+	0.14: -309,
+	0.15: -296,
+	0.16: -284,
+	0.17: -273,
+	0.18: -262,
+	0.19: -251,
+	0.20: -240,
+	0.21: -230,
+	0.22: -220,
+	0.23: -211,
+	0.24: -202,
+	0.25: -193,
+	0.26: -184,
+	0.27: -175,
+	0.28: -166,
+	0.29: -158,
+	0.30: -149,
+	0.31: -141,
+	0.32: -133,
+	0.33: -125,
+	0.34: -117,
+	0.35: -110,
+	0.36: -102,
+	0.37: -95,
+	0.38: -87,
+	0.39: -80,
+	0.40: -72,
+	0.41: -65,
+	0.42: -57,
+	0.43: -50,
+	0.44: -43,
+	0.45: -36,
+	0.46: -29,
+	0.47: -21,
+	0.48: -14,
+	0.49: -7,
+	0.50: 0,
+	0.51: 7,
+	0.52: 14,
+	0.53: 21,
+	0.54: 29,
+	0.55: 36,
+	0.56: 43,
+	0.57: 50,
+	0.58: 57,
+	0.59: 65,
+	0.60: 72,
+	0.61: 80,
+	0.62: 87,
+	0.63: 95,
+	0.64: 102,
+	0.65: 110,
+	0.66: 117,
+	0.67: 125,
+	0.68: 133,
+	0.69: 141,
+	0.70: 149,
+	0.71: 158,
+	0.72: 166,
+	0.73: 175,
+	0.74: 184,
+	0.75: 193,
+	0.76: 202,
+	0.77: 211,
+	0.78: 220,
+	0.79: 230,
+	0.80: 240,
+	0.81: 251,
+	0.82: 262,
+	0.83: 273,
+	0.84: 284,
+	0.85: 296,
+	0.86: 309,
+	0.87: 322,
+	0.88: 336,
+	0.89: 351,
+	0.90: 366,
+	0.91: 383,
+	0.92: 401,
+	0.93: 422,
+	0.94: 444,
+	0.95: 470,
+	0.96: 501,
+	0.97: 538,
+	0.98: 589,
+	0.99: 677,
+	1.00: 800,
+};
 
-	return Math.round(
-		avgOpponentElo + 400 * Math.log10(scoreRate / (1 - scoreRate))
-	);
+function getFidePerformanceDelta(scoreRate) {
+	// FIDE publishes the dp table in 0.01 score increments. For score rates
+	// that do not land exactly on a table row, snap to the nearest published row.
+	const normalizedScore = Math.min(1, Math.max(0, scoreRate));
+	const roundedScore = Math.round(normalizedScore * 100) / 100;
+	return FIDE_DP_TABLE[roundedScore];
+}
+
+function calculatePerformanceFromScore(avgOpponentElo, scoreRate) {
+	return Math.round(avgOpponentElo + getFidePerformanceDelta(scoreRate));
 }
 
 function getBergerPairingsIdx(size) {
