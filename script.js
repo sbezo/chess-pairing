@@ -576,64 +576,6 @@ export class Controller {
 		this.data.generatePairings(method)
 	}
 
-	saveAll() {
-		if (!this.data.hasTornamentId()) {
-			// create cookie if there is none (case: pairing was not generated yet)
-			this.data.tournamentInfo.id = this.data.generateRandomId()
-		}
-
-		// brx: changed to save all data
-		const jsonContent = JSON.stringify(this.data);
-
-		// fail: firefox on mobile: opens file instead of download
-		//const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
-		
-		// TODO: test: application/octet-stream
-		// TODO: test: const blob = new Blob([jsonContent], { type: "text/plain;charset=utf-8" }); 
-		const blob = new Blob([jsonContent], { type: "data: attachement/file;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
-
-		const url = URL.createObjectURL(blob); //vytvori temporrary URL pre tento objekt
-		const link = document.createElement("a"); //vytvori anchor element, ktory bude pouzity na ulozenie Blob contentu
-
-		link.href = url;
-		link.download = "tournament-" + this.data.tournamentInfo.id + ".json";
-		document.body.appendChild(link); //vlozi link do body dokumentu, neskor sa nan programom klikne
-		link.click(); //simuluje click to anchor element
-		document.body.removeChild(link); // odstrani element z body dokumentu
-		URL.revokeObjectURL(url); // Clean up the URL object
-	}
-
-	loadAll(event) {
-		const file = event.target.files[0];
-		const reader = new FileReader();
-
-		// save instance of class to reader object to some unique variable
-		reader.source_app_392483928 = this
-		reader.onload = function(e) {
-
-			// app_inst is our saved app instance, because we are in FileReader object ('this' = FileReader)
-			let app_inst = e.target.source_app_392483928
-			const text = e.target.result;
-			try {
-				// brx: load all data instead
-				const data_loaded = JSON.parse(text); // Parse the JSON content
-
-				
-				if (app_inst.data.hasTornamentId() && app_inst.data.tournamentInfo.id !== data_loaded.tournamentInfo.id) {
-					if (!confirm("Data from file are not for current tournament.\nCurrent tournament has id: " 
-						+ app_inst.data.tournamentInfo.id + "\nThis id should be in loaded file name for same tournament.\nReplace ?")) {
-						return;
-					}
-				}
-
-				app_inst.applyAllData(data_loaded)
-			} catch (error) {
-				console.error('Error parsing JSON:', error);
-			}
-		};
-		reader.readAsText(file);
-	}
-
 	applyAllData(data_loaded) {
 		// Apply all data to DOM	
 		this.clearResultsTab(); // Clear existing results in pairing subtabs for each round
@@ -1016,9 +958,9 @@ export class Controller {
 	}
 
 	// ************************************************************
-	// CSV
+	// Browser-local player groups
 	
-	exportToCSV() {
+	savePlayersPopup() {
 		Swal.fire({
 			title: "Save Players",
 			html: `
@@ -1035,36 +977,13 @@ export class Controller {
 			didOpen: () => {
 				document.getElementById("groupName").focus();
 			}
-		}).then((result) => {
-			const groupName = document.getElementById("groupName").value || "players";
-			if (result.isConfirmed){
-				(result.dismiss === Swal.DismissReason.cancel) 
-				this.savePlayersLocally(groupName);
-			}
-		});
-	}
-
-	downloadPlayersCSV(groupName) {
-		let csvContent = "data:text/csv;charset=utf-8,Name,Elo\n";
-		this.data.players.forEach(player => {
-			csvContent += `${player.name},${player.Elo}\n`;
-		});
-
-		let encodedUri = encodeURI(csvContent);
-		let link = document.createElement("a");
-		link.setAttribute("href", encodedUri);
-		link.setAttribute("download", groupName + ".csv");
-		document.body.appendChild(link); // Required for FF
-		link.click();
-		document.body.removeChild(link); // Clean up
-		
-		Swal.fire({
-			title: "Downloaded!",
-			text: `Players saved as "${groupName}.csv"`,
-			icon: "success",
-			confirmButtonColor: "#d4a15b"
-		});
-	}
+			}).then((result) => {
+				const groupName = document.getElementById("groupName").value || "players";
+				if (result.isConfirmed){
+					this.savePlayersLocally(groupName);
+				}
+			});
+		}
 
 	savePlayersLocally(groupName) {
 		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
@@ -1128,16 +1047,7 @@ export class Controller {
 			cancelButtonColor: "#888",
 			confirmButtonText: "Load",
 			cancelButtonText: "Cancel",
-			allowOutsideClick: false,
-			didOpen: () => {
-				const loadBtn = document.getElementById('loadFromComputerBtn');
-				if (loadBtn) {
-					loadBtn.addEventListener('click', () => {
-						Swal.close();
-						document.getElementById('csvFileInput').click();
-					});
-				}
-			}
+			allowOutsideClick: false
 		}).then((result) => {
 			if (result.isConfirmed) {
 				const selectElement = document.getElementById('savedGroupSelect');
@@ -1171,28 +1081,6 @@ export class Controller {
 			icon: "success",
 			confirmButtonColor: "#d4a15b"
 		});
-	}
-
-	importFromCSV(event) {
-		const file = event.target.files[0];
-		const reader = new FileReader();
-		// save instance of class to reader object to some unique variable
-		reader.source_app_392483928 = this
-
-		reader.onload = function(e) {
-			let app_inst = e.target.source_app_392483928
-			const text = e.target.result;
-			const rows = text.split('\n').slice(1); // Skip header row
-			rows.forEach(row => {
-				const [name, Elo] = row.split(',');
-				if (name && Elo) {
-					if (!app_inst.data.players.some((player) => player.name === name))
-						app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
-				}
-			});
-			app_inst.updatePlayersTable();
-		};
-		reader.readAsText(file);
 	}
 
 	updateCriteriaForm(criterium) {
