@@ -22,7 +22,7 @@ Features:
 Features:
 
     Full Demo
-    Browser-local save & load
+    Save All & Load All
     New Tournament
     Settings - final criteria
     refactoring to OOP

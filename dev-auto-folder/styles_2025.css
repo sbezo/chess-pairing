@@ -118,8 +118,7 @@ body {
     grid-template-columns: 1fr 1fr;
 }
 
-.button-container button,
-.ui-action-button {
+.button-container button {
     flex: 1 1 auto;
     margin: 4px;
     padding: 12px 8px;
@@ -142,13 +141,11 @@ body {
     background-color: var(--buttons-2-hover);
 }
 /* Hover and Disabled States for buttons */
-.button-container button:hover:not(:disabled),
-.ui-action-button:hover:not(:disabled) {
+.button-container button:hover:not(:disabled) {
     cursor: pointer;
     background-color: var(--buttons-1-hover);
 }
-.button-container button.disabled,
-.ui-action-button.disabled {
+.button-container button.disabled {
     cursor: default;
 }
 
@@ -158,8 +155,7 @@ body {
         display: flex;
         gap: 12px;
     }
-    .button-container button,
-    .ui-action-button {
+    .button-container button {
         flex: 1 1 auto;
         margin: 4px;
         padding: 12px 8px;
