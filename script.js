@@ -1,396 +1,63 @@
-class ResultRow {
-	constructor(player1Idx, player2Idx, result="-") {
-		this.player1Idx = player1Idx
-		this.player2Idx = player2Idx
-		this.result = result
-	}
-}
-
-// model class - only data and operations on it, no DOM usage
-// all data is stored here
-export class Tournament {
-	static MUTUAL_RESULTS_CRIT = "_Same_group";
-	static SONNEBORG_BERGER_CRIT = "_Sonneborg-Berger";
-	static WINS_CRIT = "_Wins";
-	static criteriaList = [
-		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT, Tournament.WINS_CRIT ],
-		[ Tournament.MUTUAL_RESULTS_CRIT, Tournament.SONNEBORG_BERGER_CRIT ],
-		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT, Tournament.WINS_CRIT ],
-		[ Tournament.SONNEBORG_BERGER_CRIT, Tournament.MUTUAL_RESULTS_CRIT],
-		[ Tournament.SONNEBORG_BERGER_CRIT],
-		[],
-		]
-
-	constructor() {
-		this.tournamentInfo = this.createTournamentInfo() 
-		this.players = [], // [ player = { name, Elo, bye (opt)}, ... ]
-		this.rounds = [] // [ round [ ResutRow ,... ], ... ] 
-
-	}
-
-	createTournamentInfo() {
-		return { 
-			// generate random hex string (used for save to distinguish files)
-			// stays same for one tournament
-			// will be generated, when pairing is done or on first save action
-			id : null,
-			werePlayersRandomized : false,
-			numCycles : 1,
-			// the order is priority
-			finalStandingsResolvers : [
-				Tournament.MUTUAL_RESULTS_CRIT,
-				Tournament.SONNEBORG_BERGER_CRIT,
-				Tournament.WINS_CRIT
-			]
-		}
-	}
-
-	saveData(){
-		this.savedAt = Date.now(); // Save current timestamp in milliseconds
-        localStorage.setItem('tournamentData', JSON.stringify(this));
-    }
-
-	loadData(){
-		let tournamentData = JSON.parse(localStorage.getItem('tournamentData'));
-		if (tournamentData) {
-			const now = Date.now();
-        	const maxAge = 48 * 60 * 60 * 1000; // 48 hours in ms
-        	if (!tournamentData.savedAt || now - tournamentData.savedAt > maxAge) {
-            	return; // Do not load old data
-        	}
-        	this.players = tournamentData.players || [];
-        	this.rounds = tournamentData.rounds || [];
-        	this.tournamentInfo = tournamentData.tournamentInfo || this.createTournamentInfo();
-    	}
-	}
-		
-	generateRandomId() {
-		// generate random hex string
-		return Math.floor((Math.random()* 1e10 + 1e10)).toString(16)
-	}
-
-	hasTornamentId() {
-		return this.tournamentInfo.id !== null
-	}
-
-	addPlayer(name, Elo, bye /*opt*/) {
-		// if 'bye' set to something other then null, it is bye 
-		// 'bye' variable not used anywhere now
-		this.players.push({ name: name, Elo: Number(Elo), bye: bye });
-		this.saveData()
-	}
-	
-	removePlayer(idx) {
-		this.players.splice(idx, 1); // Remove from players array
-		this.saveData()
-	}
-	
-	lookupPlayerIndex(name) {
-	    // return index of requested player
-	    return this.players.findIndex(player => player.name === name);
-	}
-
-	setResult(roundIndex, resultRow, result) {
-		//if (roundIndex > this.rounds.length || resultRow > this.rounds[roundIndex].length) {
-		//	throw new Error("round or row index out of range");
-		//}
-    	this.rounds[roundIndex][resultRow].result = result;
-		this.saveData()
-	}
-
-	getPlayer(idx) {
-		if (idx <0 || idx > this.players.length) {
-			console.error("player index out of range");
-			throw new Error("player index out of range"); 
-		}
-		return this.players[idx];
-	}
-
-	sortPlayers() {
-		this.players.sort((a, b) => b.Elo - a.Elo); // Sort players by Elo in descending order
-		this.saveData()
-	}
-
-	randomizePlayers() {
-		for (let i = this.players.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[this.players[i], this.players[j]] = [this.players[j], this.players[i]];
-		}
-		this.tournamentInfo.werePlayersRandomized = true
-		this.saveData()
-	}
-
-	addByeIfNeeded() {
-	    // Add a "Bye" player if the number of players is odd
-	    if (this.players.length % 2 !== 0) {
-        	this.players.push({ name: "Bye", Elo: 1400 , bye: true});
-    	}
-	}
-
-	clearResults() {
-		this.rounds = [];
-		this.saveData()
-	}
-
-	generatePairings(method) {
-		// now only Berger method is supported
-	    this.rounds = generateBergerPairingsIdx(this.players.length);
-
-		// add results to all pairings
-		this.rounds = this.rounds.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
-
-		// set number of cycles to 1
-		this.tournamentInfo.numCycles = 1
-
-		console.assert(!this.hasTornamentId())
-		this.tournamentInfo.id = this.generateRandomId()
-		this.saveData()
-	}
-
-	extraCycle() {
-		let newCycle = generateBergerPairingsIdx(this.players.length);
-		// setup cycles
-		let cycle1 = newCycle.map(round => round.map(pair => new ResultRow(pair[0], pair[1], "-")));
-		let cycle2 = newCycle.map(round => round.map(pair => new ResultRow(pair[1], pair[0], "-")));
-
-		// in case of odd number of curent cycles add cycle1, else cycle2 + add results
-		if (this.tournamentInfo.numCycles % 2 == 1) {
-			this.rounds = this.rounds.concat(cycle2);
-		} else {
-			this.rounds = this.rounds.concat(cycle1);
-		}
-		this.tournamentInfo.numCycles += 1
-		this.saveData()
-	}
-
-	calculateStandings() {
-		let standings = this.players.map(player => ({
-			name: player.name,
-			elo: player.Elo,
-			points: 0,
-			//berger: 0,
-			additionalCriteria: 
-			  new Array(this.tournamentInfo.finalStandingsResolvers.length).fill(0)
-		}));
-
-		this.calcPoints(standings)
-
-		// calculate additional criteria
-		for (let idx = 0;
-			idx < this.tournamentInfo.finalStandingsResolvers.length;
-			idx++)
-		{
-			let method = this.tournamentInfo.finalStandingsResolvers[idx]
-			switch(method) {
-				case Tournament.MUTUAL_RESULTS_CRIT:
-					this.calcSameGroupScore(standings, idx)
-					break
-				case Tournament.SONNEBORG_BERGER_CRIT:
-					this.calcSonneborgBerger(standings, idx)
-					break
-				case Tournament.WINS_CRIT:
-					this.calcWins(standings, idx)
-					break
-				default:
-					console.error("unknown method")
-			}
-		};
-
-		// sort it all, use all criteria at once
-		standings.sort((a, b) => {
-			if (b.points !== a.points) {
-				return b.points - a.points; // Sort by points
-			} else {
-				// sort by additional criteria
-				for (let idx = 0; 
-					idx< this.tournamentInfo.finalStandingsResolvers.length; 
-					idx++) {
-
-					if (a.additionalCriteria[idx] !== b.additionalCriteria[idx]) {
-						return b.additionalCriteria[idx] - a.additionalCriteria[idx]
-					}
-				}
-				return 0
-			}
-		});
-
-		return standings
-	}
-
-	// Calculate points
-	calcPoints(standings) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-
-				let result = resultRow.result
-				switch(result) {
-					case "1":
-					case "0":
-					case "0.5":
-					case "0-0":
-						player1.points += resultToValue(result);
-						player2.points += resultToValue(invertedResult(result));
-						break
-					default:
-						;
-				}
-			});
-		});
-	}
-
-	// Calculate Neustadtl Sonneborn–Berger score
-	calcSonneborgBerger(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-				switch(resultRow.result) {
-					case "1":
-						player1.additionalCriteria[critIdx] += player2.points;
-						break;
-					case "0":
-						player2.additionalCriteria[critIdx] += player1.points;
-						break;
-					case "0.5":
-						player1.additionalCriteria[critIdx] += player2.points * 0.5;
-						player2.additionalCriteria[critIdx] += player1.points * 0.5;
-						break;
-					default:
-						;
-				}
-			});
-		});
-	}
-
-	// Calculate mutual results 
-	calcSameGroupScore(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-
-				if (player1.points === player2.points) {
-					switch(resultRow.result) {
-						case "1":
-						case "0":
-						case "0.5":
-						case "0-0":
-							player1.additionalCriteria[critIdx] += 
-								resultToValue(resultRow.result);
-							player2.additionalCriteria[critIdx] += 
-								resultToValue(invertedResult(resultRow.result));
-							break;
-						default:
-							;
-					}
-				}
-			});
-		});
-	}
-
-	// brx: solves case when more than 2 players have same score
-	// Calculate 'More wins better' criterium
-	calcWins(standings, critIdx) {
-		this.rounds.forEach(round => {
-			round.forEach(resultRow => {
-				let player1 = standings[resultRow.player1Idx];
-				let player2 = standings[resultRow.player2Idx];
-				switch(resultRow.result) {
-					case "1":
-					case "0":
-						player1.additionalCriteria[critIdx] += 
-							resultToValue(resultRow.result);
-						player2.additionalCriteria[critIdx] += 
-							resultToValue(invertedResult(resultRow.result));
-						break;
-					default:
-						;
-				}
-			});
-		});
-	}
-}
-
-function getCriteriumVisibleName(crit) {
-	switch(crit) {
-		case Tournament.MUTUAL_RESULTS_CRIT:
-			return "Mutual results"
-		case Tournament.SONNEBORG_BERGER_CRIT:
-			return "Berger Score"
-		case Tournament.WINS_CRIT:
-			return "More Wins"
-		default:
-			console.error("unknown criterium: '" + crit + "'")
-			return "????"
-	}
-}
-
-function invertedResult(result) {
-	switch(result) {
-		case "1": 
-			return "0"
-		case "0":
-			return "1"
-		case "0.5":
-		case "0-0":
-		default:
-			;
-	}
-	return result
-}
-
-function resultToValue(result) {
-	switch(result) {
-		case "1": 
-			return 1
-		case "0":
-		case "0-0":
-			return 0
-		case "0.5":
-			return 0.5
-		default:
-			console.error("result data can't be used as value now");
-	}
-	throw new Error("result data can't be used as value now");
-}
-
-function result_to_save_id(result) {
-	switch(result) {
-		case "0":
-			return 1
-		case "0.5":
-			return 2
-		case "1":
-			return 3
-		case "0-0":
-			return 4
-		default:
-			return 0
-	}
-}
-
-function result_from_save_id(result) {
-	let pos = [ '-', '0', '0.5', '1', '0-0' ]
-
-	if (result >= 0 && result < pos.length)
-		return pos[result]
-	// ? log error ?
-	return '-'
-}
-
-// ************************************************************
+import {
+	Tournament,
+	getCriteriumVisibleName,
+	invertedResult,
+} from "./tournament.js";
 
 export class Controller {
 	constructor(tournament_data) {
 		this.data = tournament_data
 	}
 
-	initialize() {
-		// load data from localStorage
-		this.data.loadData()
+	async initialize() {
+		const savedDataStatus = this.data.getSavedDataStatus();
+		if (savedDataStatus.isStale) {
+			const shouldResume = await this.promptResumeSavedTournament(
+				savedDataStatus.savedAt
+			);
+
+			if (shouldResume) {
+				this.data.loadData();
+			} else {
+				this.data.clearSavedData();
+			}
+		} else if (savedDataStatus.hasSavedData) {
+			this.data.loadData();
+		}
+
 		this.applyAllData(this.data)
+	}
+
+	formatSavedTournamentDate(savedAt) {
+		if (!savedAt) {
+			return "an unknown date";
+		}
+
+		return new Intl.DateTimeFormat(undefined, {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}).format(new Date(savedAt));
+	}
+
+	async promptResumeSavedTournament(savedAt) {
+		const savedAtLabel = this.formatSavedTournamentDate(savedAt);
+		const result = await Swal.fire({
+			title: "Old saved tournament found",
+			html: `Found a saved tournament from <strong>${savedAtLabel}</strong>. Do you want to resume it?`,
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#f87d7dff",
+			confirmButtonText: "Resume",
+			cancelButtonText: "Discard",
+			reverseButtons: true,
+			allowOutsideClick: false,
+		});
+
+		return result.isConfirmed;
 	}
 
 	//newTournament(confirmed = false) {
@@ -458,7 +125,7 @@ export class Controller {
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
-		document.getElementById("criteria").disabled = false;
+		document.getElementById("criteriaButton").disabled = false;
 	}
 
 	lockWidgets() {
@@ -476,7 +143,7 @@ export class Controller {
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
-		document.getElementById("criteria").disabled = true;
+		document.getElementById("criteriaButton").disabled = true;
 	}
 
 	extraCycle() {
@@ -574,64 +241,6 @@ export class Controller {
 
 	generatePairings(method) {
 		this.data.generatePairings(method)
-	}
-
-	saveAll() {
-		if (!this.data.hasTornamentId()) {
-			// create cookie if there is none (case: pairing was not generated yet)
-			this.data.tournamentInfo.id = this.data.generateRandomId()
-		}
-
-		// brx: changed to save all data
-		const jsonContent = JSON.stringify(this.data);
-
-		// fail: firefox on mobile: opens file instead of download
-		//const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
-		
-		// TODO: test: application/octet-stream
-		// TODO: test: const blob = new Blob([jsonContent], { type: "text/plain;charset=utf-8" }); 
-		const blob = new Blob([jsonContent], { type: "data: attachement/file;charset=utf-8" }); //vytvori binarny objekt, ktory bude obsahovat json data
-
-		const url = URL.createObjectURL(blob); //vytvori temporrary URL pre tento objekt
-		const link = document.createElement("a"); //vytvori anchor element, ktory bude pouzity na ulozenie Blob contentu
-
-		link.href = url;
-		link.download = "tournament-" + this.data.tournamentInfo.id + ".json";
-		document.body.appendChild(link); //vlozi link do body dokumentu, neskor sa nan programom klikne
-		link.click(); //simuluje click to anchor element
-		document.body.removeChild(link); // odstrani element z body dokumentu
-		URL.revokeObjectURL(url); // Clean up the URL object
-	}
-
-	loadAll(event) {
-		const file = event.target.files[0];
-		const reader = new FileReader();
-
-		// save instance of class to reader object to some unique variable
-		reader.source_app_392483928 = this
-		reader.onload = function(e) {
-
-			// app_inst is our saved app instance, because we are in FileReader object ('this' = FileReader)
-			let app_inst = e.target.source_app_392483928
-			const text = e.target.result;
-			try {
-				// brx: load all data instead
-				const data_loaded = JSON.parse(text); // Parse the JSON content
-
-				
-				if (app_inst.data.hasTornamentId() && app_inst.data.tournamentInfo.id !== data_loaded.tournamentInfo.id) {
-					if (!confirm("Data from file are not for current tournament.\nCurrent tournament has id: " 
-						+ app_inst.data.tournamentInfo.id + "\nThis id should be in loaded file name for same tournament.\nReplace ?")) {
-						return;
-					}
-				}
-
-				app_inst.applyAllData(data_loaded)
-			} catch (error) {
-				console.error('Error parsing JSON:', error);
-			}
-		};
-		reader.readAsText(file);
 	}
 
 	applyAllData(data_loaded) {
@@ -986,15 +595,17 @@ export class Controller {
 			let nameCell = newRow.insertCell(1);
 			let eloCell = newRow.insertCell(2);
 			let pointsCell = newRow.insertCell(3);
+			let performanceCell = newRow.insertCell(4);
 			numberCell.textContent = i + 1;
 			nameCell.textContent = standings[i].name;
 			eloCell.textContent = standings[i].elo;
 			pointsCell.textContent = standings[i].points;
+			performanceCell.textContent = standings[i].performance ?? "-";
 
 			for (let idx = 0; 
 				idx < this.data.tournamentInfo.finalStandingsResolvers.length; 
 				idx++) {
-				let criteriaCell = newRow.insertCell(4+idx);
+				let criteriaCell = newRow.insertCell(5 + idx);
 				criteriaCell.textContent = standings[i].additionalCriteria[idx];
 			}
 		}
@@ -1005,7 +616,7 @@ export class Controller {
 		let table_tr = document.getElementById("standingsTable").getElementsByTagName('tr')[0];
 
 		// first shrink to predefined static names
-		while(table_tr.children.length > 4) {
+		while(table_tr.children.length > 5) {
 			table_tr.removeChild(table_tr.lastChild)
 		}
 
@@ -1016,9 +627,9 @@ export class Controller {
 	}
 
 	// ************************************************************
-	// CSV
+	// Browser-local player groups
 	
-	exportToCSV() {
+	savePlayersPopup() {
 		Swal.fire({
 			title: "Save Players",
 			html: `
@@ -1035,36 +646,13 @@ export class Controller {
 			didOpen: () => {
 				document.getElementById("groupName").focus();
 			}
-		}).then((result) => {
-			const groupName = document.getElementById("groupName").value || "players";
-			if (result.isConfirmed){
-				(result.dismiss === Swal.DismissReason.cancel) 
-				this.savePlayersLocally(groupName);
-			}
-		});
-	}
-
-	downloadPlayersCSV(groupName) {
-		let csvContent = "data:text/csv;charset=utf-8,Name,Elo\n";
-		this.data.players.forEach(player => {
-			csvContent += `${player.name},${player.Elo}\n`;
-		});
-
-		let encodedUri = encodeURI(csvContent);
-		let link = document.createElement("a");
-		link.setAttribute("href", encodedUri);
-		link.setAttribute("download", groupName + ".csv");
-		document.body.appendChild(link); // Required for FF
-		link.click();
-		document.body.removeChild(link); // Clean up
-		
-		Swal.fire({
-			title: "Downloaded!",
-			text: `Players saved as "${groupName}.csv"`,
-			icon: "success",
-			confirmButtonColor: "#d4a15b"
-		});
-	}
+			}).then((result) => {
+				const groupName = document.getElementById("groupName").value || "players";
+				if (result.isConfirmed){
+					this.savePlayersLocally(groupName);
+				}
+			});
+		}
 
 	savePlayersLocally(groupName) {
 		const playerGroups = JSON.parse(localStorage.getItem('playerGroups')) || {};
@@ -1128,16 +716,7 @@ export class Controller {
 			cancelButtonColor: "#888",
 			confirmButtonText: "Load",
 			cancelButtonText: "Cancel",
-			allowOutsideClick: false,
-			didOpen: () => {
-				const loadBtn = document.getElementById('loadFromComputerBtn');
-				if (loadBtn) {
-					loadBtn.addEventListener('click', () => {
-						Swal.close();
-						document.getElementById('csvFileInput').click();
-					});
-				}
-			}
+			allowOutsideClick: false
 		}).then((result) => {
 			if (result.isConfirmed) {
 				const selectElement = document.getElementById('savedGroupSelect');
@@ -1173,34 +752,131 @@ export class Controller {
 		});
 	}
 
-	importFromCSV(event) {
-		const file = event.target.files[0];
-		const reader = new FileReader();
-		// save instance of class to reader object to some unique variable
-		reader.source_app_392483928 = this
-
-		reader.onload = function(e) {
-			let app_inst = e.target.source_app_392483928
-			const text = e.target.result;
-			const rows = text.split('\n').slice(1); // Skip header row
-			rows.forEach(row => {
-				const [name, Elo] = row.split(',');
-				if (name && Elo) {
-					if (!app_inst.data.players.some((player) => player.name === name))
-						app_inst.data.addPlayer(name.trim(), Number(Elo.trim()) );
-				}
-			});
-			app_inst.updatePlayersTable();
-		};
-		reader.readAsText(file);
+	updateCriteriaForm(criterium) {
+		const criteriaValue = document.getElementById("criteriaValue");
+		if (criteriaValue) {
+			criteriaValue.textContent = this.getCriteriaOptionLabel(criterium);
+		}
 	}
 
-	updateCriteriaForm(criterium) {
+	getCriteriaOptionLabel(criterium) {
+		if (!criterium || criterium.length === 0) {
+			return "Total points only";
+		}
+
+		return criterium.map(getCriteriumVisibleName).join(", ");
+	}
+
+	openCriteriaPopup() {
+		const currentCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+		const totalOptions = Tournament.criteriaList.length;
+		let selectedIdx = 0;
+
 		Tournament.criteriaList.forEach((item, idx) => {
-			if (item.join() === criterium.join()) {
-				document.getElementById("criteria").selectedIndex = idx;
+			if (item.join() === currentCriteria.join()) {
+				selectedIdx = idx;
 			}
-		})
+		});
+
+		Swal.fire({
+			title: "Final standings criteria",
+			html: `
+				<div id="criteriaPicker" style="display: grid; gap: 14px; margin-top: 6px;">
+					<div style="display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 10px;">
+						<button type="button" id="criteriaPrev" style="height: 44px; border: none; border-radius: 999px; background: #efe4d0; color: #6d4c23; font-size: 28px; cursor: pointer;">&#8249;</button>
+						<div style="display: grid; gap: 8px;">
+							<div id="criteriaPreviewPrev" style="padding: 10px 12px; border-radius: 14px; background: #f7f1e7; color: #9b8a72; font-size: 13px; transform: scale(0.95); opacity: 0.75;"></div>
+							<div id="criteriaPreviewCurrent" style="padding: 16px 14px; border-radius: 18px; background: linear-gradient(180deg, #f7e9cd 0%, #ecd29f 100%); color: #5b3c15; font-weight: 700; box-shadow: 0 10px 24px rgba(120, 80, 20, 0.16);"></div>
+							<div id="criteriaPreviewNext" style="padding: 10px 12px; border-radius: 14px; background: #f7f1e7; color: #9b8a72; font-size: 13px; transform: scale(0.95); opacity: 0.75;"></div>
+						</div>
+						<button type="button" id="criteriaNext" style="height: 44px; border: none; border-radius: 999px; background: #efe4d0; color: #6d4c23; font-size: 28px; cursor: pointer;">&#8250;</button>
+					</div>
+					<div id="criteriaMeta" style="font-size: 13px; color: #6d6356; line-height: 1.5;"></div>
+					<div id="criteriaDots" style="display: flex; justify-content: center; gap: 8px;"></div>
+				</div>
+			`,
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Save",
+			cancelButtonText: "Cancel",
+			focusConfirm: false,
+			didOpen: () => {
+				const popup = Swal.getPopup();
+				const prevButton = popup.querySelector("#criteriaPrev");
+				const nextButton = popup.querySelector("#criteriaNext");
+				const prevPreview = popup.querySelector("#criteriaPreviewPrev");
+				const currentPreview = popup.querySelector("#criteriaPreviewCurrent");
+				const nextPreview = popup.querySelector("#criteriaPreviewNext");
+				const meta = popup.querySelector("#criteriaMeta");
+				const dots = popup.querySelector("#criteriaDots");
+
+				const getWrappedIndex = (idx) => (idx + totalOptions) % totalOptions;
+				const getCriteriaMeta = (idx) => {
+					const criteria = Tournament.criteriaList[idx];
+					if (criteria.length === 0) {
+						return "Only total points decide the final standing.";
+					}
+					return `Priority order: ${criteria.map((crit, order) => `${order + 1}. ${getCriteriumVisibleName(crit)}`).join("  |  ")}`;
+				};
+
+				const renderDots = () => {
+					dots.innerHTML = "";
+					for (let idx = 0; idx < totalOptions; idx++) {
+						const dot = document.createElement("span");
+						dot.style.width = "9px";
+						dot.style.height = "9px";
+						dot.style.borderRadius = "999px";
+						dot.style.background = idx === selectedIdx ? "#c9913d" : "#e6d8be";
+						dot.style.transition = "all 140ms ease";
+						dots.appendChild(dot);
+					}
+				};
+
+				const renderPicker = () => {
+					prevPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[getWrappedIndex(selectedIdx - 1)]
+					);
+					currentPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[selectedIdx]
+					);
+					nextPreview.textContent = this.getCriteriaOptionLabel(
+						Tournament.criteriaList[getWrappedIndex(selectedIdx + 1)]
+					);
+					meta.textContent = getCriteriaMeta(selectedIdx);
+					renderDots();
+				};
+
+				prevButton.addEventListener("click", () => {
+					selectedIdx = getWrappedIndex(selectedIdx - 1);
+					renderPicker();
+				});
+
+				nextButton.addEventListener("click", () => {
+					selectedIdx = getWrappedIndex(selectedIdx + 1);
+					renderPicker();
+				});
+
+				renderPicker();
+			},
+			preConfirm: () => {
+				if (selectedIdx < 0 || selectedIdx >= totalOptions) {
+					Swal.showValidationMessage("Please select criteria");
+					return false;
+				}
+				return String(selectedIdx);
+			}
+		}).then((result) => {
+			if (!result.isConfirmed) {
+				return;
+			}
+
+			const opt = Number(result.value);
+			this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt];
+			this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers);
+			this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
+			this.data.saveData();
+		});
 	}
 
 	// ************************************************************
@@ -1341,18 +1017,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// Settings Tab
 
-
-  	const criteriaSelect = document.getElementById('criteria');
-	// Lookup index of saved criteria
-	Tournament.criteriaList.forEach((item, idx) => {
-		if (item.join() === app.data.tournamentInfo.finalStandingsResolvers.join()) {
-			criteriaSelect.selectedIndex = idx;	// set initial value according to saved data
-		}
-	});
-	criteriaSelect.addEventListener('change', function() {	// listen for changes
-		let opt = this.selectedIndex
-		app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-		app.updateStandingTableNames(app.data.tournamentInfo.finalStandingsResolvers)
-		app.data.saveData()
-	});
+	const criteriaButton = document.getElementById('criteriaButton');
+	if (criteriaButton) {
+		criteriaButton.addEventListener('click', () => {
+			app.openCriteriaPopup();
+		});
+	}
 });
