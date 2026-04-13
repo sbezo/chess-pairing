@@ -80,7 +80,7 @@ export class Controller {
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.remove('locked');
-		document.getElementById("criteria").disabled = false;
+		document.getElementById("criteriaButton").disabled = false;
 	}
 
 	lockWidgets() {
@@ -98,7 +98,7 @@ export class Controller {
 		
 		// Optionally, add a visual indication that the table is locked
 		document.getElementById("dataTable").classList.add('locked');
-		document.getElementById("criteria").disabled = true;
+		document.getElementById("criteriaButton").disabled = true;
 	}
 
 	extraCycle() {
@@ -706,11 +706,61 @@ export class Controller {
 	}
 
 	updateCriteriaForm(criterium) {
+		const criteriaValue = document.getElementById("criteriaValue");
+		if (criteriaValue) {
+			criteriaValue.textContent = this.getCriteriaOptionLabel(criterium);
+		}
+	}
+
+	getCriteriaOptionLabel(criterium) {
+		if (!criterium || criterium.length === 0) {
+			return "Total points only";
+		}
+
+		return criterium.map(getCriteriumVisibleName).join(", ");
+	}
+
+	openCriteriaPopup() {
+		const currentCriteria = this.data.tournamentInfo.finalStandingsResolvers;
+		let selectedIdx = 0;
+
 		Tournament.criteriaList.forEach((item, idx) => {
-			if (item.join() === criterium.join()) {
-				document.getElementById("criteria").selectedIndex = idx;
+			if (item.join() === currentCriteria.join()) {
+				selectedIdx = idx;
 			}
-		})
+		});
+
+		const inputOptions = Tournament.criteriaList.reduce((options, item, idx) => {
+			options[idx] = this.getCriteriaOptionLabel(item);
+			return options;
+		}, {});
+
+		Swal.fire({
+			title: "Final standings criteria",
+			input: "radio",
+			inputOptions,
+			inputValue: String(selectedIdx),
+			showCancelButton: true,
+			confirmButtonColor: "#d4a15b",
+			cancelButtonColor: "#888",
+			confirmButtonText: "Save",
+			cancelButtonText: "Cancel",
+			inputValidator: (value) => {
+				if (value === null || value === "") {
+					return "Please select criteria";
+				}
+			}
+		}).then((result) => {
+			if (!result.isConfirmed) {
+				return;
+			}
+
+			const opt = Number(result.value);
+			this.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt];
+			this.updateStandingTableNames(this.data.tournamentInfo.finalStandingsResolvers);
+			this.updateCriteriaForm(this.data.tournamentInfo.finalStandingsResolvers);
+			this.data.saveData();
+		});
 	}
 
 	// ************************************************************
@@ -851,18 +901,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// Settings Tab
 
-
-  	const criteriaSelect = document.getElementById('criteria');
-	// Lookup index of saved criteria
-	Tournament.criteriaList.forEach((item, idx) => {
-		if (item.join() === app.data.tournamentInfo.finalStandingsResolvers.join()) {
-			criteriaSelect.selectedIndex = idx;	// set initial value according to saved data
-		}
-	});
-	criteriaSelect.addEventListener('change', function() {	// listen for changes
-		let opt = this.selectedIndex
-		app.data.tournamentInfo.finalStandingsResolvers = Tournament.criteriaList[opt]
-		app.updateStandingTableNames(app.data.tournamentInfo.finalStandingsResolvers)
-		app.data.saveData()
-	});
+	const criteriaButton = document.getElementById('criteriaButton');
+	if (criteriaButton) {
+		criteriaButton.addEventListener('click', () => {
+			app.openCriteriaPopup();
+		});
+	}
 });
