@@ -47,14 +47,7 @@
         <button onclick="app.sortPlayers()">Sort Players</button>
         <button onclick="app.randomizePlayers()">Randomize Players</button>
         <button onclick="app.clearPlayersTable()">Clear Table</button>
-        <button onclick="app.exportToCSV()">Save Players</button>
-        <input
-          type="file"
-          id="csvFileInput"
-          accept=".csv"
-          style="display: none"
-          onchange="app.importFromCSV(event)"
-        />
+        <button onclick="app.savePlayersPopup()">Save Players</button>
         <button onclick="app.importPlayersPopup()">Load Players</button>
         <button onclick="app.importDemo()">Load Demo Players</button>
         <button onclick="app.testAll()">Full Demo</button>
