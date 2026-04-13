@@ -57,6 +57,10 @@ function generateBergerPairings(players) {
 
 }
 
+if (typeof globalThis !== 'undefined') {
+    globalThis.generateBergerPairingsIdx = generateBergerPairingsIdx
+    globalThis.generateBergerPairings = generateBergerPairings
+}
 
 if (typeof exports !== 'undefined') {
     exports.generateBergerPairingsIdx = generateBergerPairingsIdx
